@@ -15,10 +15,10 @@ def _refresh(callback):
         return res
     return inner
 
-move = _refresh(lambda: _board.move())
-turn_left = _refresh(lambda: _board.turn_left())
-pick_beeper = _refresh(lambda: _board.pick_beeper())
-put_beeper = _refresh(lambda: _board.put_beeper())
+move = _refresh(_board.move)
+turn_left = _refresh(_board.turn_left)
+pick_beeper = _refresh(_board.pick_beeper)
+put_beeper = _refresh(_board.put_beeper)
 front_is_clear = _board.front_is_clear
 right_is_clear = _board.right_is_clear
 left_is_clear = _board.left_is_clear
