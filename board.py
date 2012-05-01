@@ -73,7 +73,7 @@ class Board(object):
 
         for y, row in enumerate(self.map):
             for x, char in enumerate(row):
-                args = [y, x, char]
+                args = [y + 1, x, char]
                 if char == '#':
                     args.append(curses.color_pair(1))
                 elif char == 'o':
@@ -82,18 +82,22 @@ class Board(object):
 
         beeper_color = curses.color_pair(3)
         for bx, by in self.beepers:
-            screen.addstr(by, bx, 'o', beeper_color)
+            screen.addstr(by + 1, bx, 'o', beeper_color)
 
         screen.addstr(
-            self.karel.position[1],
+            self.karel.position[1] + 1,
             self.karel.position[0],
             self.karel_char(),
             curses.color_pair(4) if self.beeper_is_present() else curses.color_pair(2)
         )
 
-        screen.addstr(y + 3, 0, ' ')
+        screen.addstr(y + 4, 0, ' ')
         screen.refresh()
         time.sleep(0.5)
+
+    def draw_exception(self, exception):
+        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+        self.screen.addstr(0, 0, str(exception), curses.color_pair(5))
 
     def karel_char(self):
         # index will be in (-2, -1, 1, 2)
