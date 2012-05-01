@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 from board import Board, LogicException
+import sys
 
 # this needs to be smarter soon
-_board = Board('simple.karelmap')
+if len(sys.argv) > 1:
+    _board = Board(sys.argv[1])
+else:
+    _board = Board('simple.karelmap')
 
 def _refresh(callback):
     def inner():

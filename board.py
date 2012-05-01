@@ -62,11 +62,10 @@ class Board(object):
                     row.append(char)
                 map.append(['#'] + row + ['#'])
 
-        bar = []
+        map.append([])
         for _ in xrange(len(map[1])):
             map[0].append('#')
-            bar.append('#')
-        map.append(bar)
+            map[-1].append('#')
         self.map = map
 
     def draw(self):
