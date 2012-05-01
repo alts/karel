@@ -19,10 +19,10 @@ move = _refresh(lambda: _board.move())
 turn_left = _refresh(lambda: _board.turn_left())
 pick_beeper = _refresh(lambda: _board.pick_beeper())
 put_beeper = _refresh(lambda: _board.put_beeper())
-front_is_clear = _refresh(lambda: _board.front_is_clear())
-right_is_clear = _refresh(lambda: _board.right_is_clear())
-left_is_clear = _refresh(lambda: _board.left_is_clear())
-beeper_is_present = _refresh(lambda: _board.beeper_is_present())
+front_is_clear = _board.front_is_clear
+right_is_clear = _board.right_is_clear
+left_is_clear = _board.left_is_clear
+beeper_is_present = _board.beeper_is_present
 
 def execute(callback):
     try:
