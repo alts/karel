@@ -23,6 +23,10 @@ front_is_clear = _board.front_is_clear
 right_is_clear = _board.right_is_clear
 left_is_clear = _board.left_is_clear
 beeper_is_present = _board.beeper_is_present
+facing_north = _board.facing_north
+facing_south = _board.facing_south
+facing_east = _board.facing_east
+facing_west = _board.facing_west
 
 def execute(callback):
     try:
