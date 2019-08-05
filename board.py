@@ -9,6 +9,7 @@ class LogicException(Exception):
 class Board(object):
     KAREL_CHARS = '<^>v'
     BEEPER_CHAR = 'o'
+    speed = 50
 
     def __init__(self, map_path):
         self.map = None
@@ -16,9 +17,12 @@ class Board(object):
         self.screen = None
         self.beepers = []
         self.construct_map(map_path)
+        self.start_screen()
+        self.draw()
 
     def __enter__(self):
         self.start_screen()
+        self.draw()
         return self
 
     def __exit__(self, *args):
@@ -32,12 +36,18 @@ class Board(object):
         # Karel
         curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
         # beeper
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         # Karel on beeper
         curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+        # Exception First
+        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+        # Exception Second
+        curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        # Complete Message
+        curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     def end_screen(self):
-        self.screen.getch()
+        time.sleep((100.0-self.speed)/100.0)
         curses.endwin()
 
     def construct_map(self, map_path):
@@ -53,6 +63,7 @@ class Board(object):
             for y, line in enumerate(f):
                 row = []
                 for x, char in enumerate(line.strip()):
+                    char = chr(char)
                     if char in self.KAREL_CHARS:
                         self.karel = Karel((x + 1, y + 1), directions[char])
                         char = '.'
@@ -63,7 +74,7 @@ class Board(object):
                 map.append(['#'] + row + ['#'])
 
         map.append([])
-        for _ in xrange(len(map[1])):
+        for _ in range(len(map[1])):
             map[0].append('#')
             map[-1].append('#')
         self.map = map
@@ -93,11 +104,29 @@ class Board(object):
 
         screen.addstr(y + 4, 0, ' ')
         screen.refresh()
-        time.sleep(0.5)
+        screen.nodelay(True)
+        time.sleep((100.0-self.speed)/100.0)
+        ch = screen.getch()
+        screen.nodelay(False)
+        if ch != -1 and chr(ch) == 'c':
+            exit(1)
+    
+    def set_speed(self, spd):
+        if spd < 0:
+            spd = 0
+        elif spd > 100:
+            spd = 100
+        self.speed = spd
 
     def draw_exception(self, exception):
-        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
         self.screen.addstr(0, 0, str(exception), curses.color_pair(5))
+        ch = self.screen.getch()
+        if chr(ch) is 'c':
+            exit(1)
+        self.screen.addstr(0, 0, str(exception), curses.color_pair(6))
+
+    def draw_complete(self):
+        self.screen.addstr(0, 0, 'Program Complete! Press any key to exit.', curses.color_pair(7))
 
     def karel_char(self):
         # index will be in (-2, -1, 1, 2)
@@ -107,7 +136,7 @@ class Board(object):
     # Karel passthroughs
     def move(self):
         if not self.front_is_clear():
-            raise LogicException('can\'t move. There is a wall in front of Karel')
+            raise LogicException('Can\'t move. There is a wall in front of Karel')
         self.karel.move()
 
     def turn_left(self):
@@ -121,12 +150,12 @@ class Board(object):
                 self.karel.pick_beeper()
                 break
         else:
-            raise LogicException('can\'t pick beeper from empty location')
+            raise LogicException('Can\'t pick beeper from empty location')
 
 
     def put_beeper(self):
         if not self.holding_beepers():
-            raise LogicException('can\'t put beeper. Karel has none')
+            raise LogicException('Can\'t put beeper. Karel has none')
         self.beepers.append(self.karel.position)
         self.karel.put_beeper()
 
@@ -163,3 +192,8 @@ class Board(object):
 
     def holding_beepers(self):
         return self.karel.holding_beepers()
+    
+    def __del__(self):
+        self.draw_complete()
+        self.screen.getch()
+        self.end_screen()
