@@ -1,37 +1,28 @@
 #!/usr/bin/env python
 from board import Board, LogicException
 import sys
+import os
 
 # this needs to be smarter soon
 if len(sys.argv) > 1:
     _board = Board(sys.argv[1])
 else:
-    _board = Board('levels\\09_newspaper.karelmap')
+    _board = Board(os.path.join('levels', '09_newspaper.karelmap'))
 
-def _refresh(callback):
-    def inner():
-        res = callback()
+def refresh(func):
+    try:
+        res = func()
         _board.draw()
         return res
-    return inner
-
-def execute(callback):
-    try:
-        _board.start_screen()
-        _board.draw()
-        callback()
-        return callback
     except LogicException as e:
         _board.draw_exception(e)
     except Exception as e:
         raise e
-    
 
-
-def move(): execute(_refresh(_board.move))
-def turn_left(): execute(_refresh(_board.turn_left))
-def pick_beeper(): execute(_refresh(_board.pick_beeper))
-def put_beeper(): execute(_refresh(_board.put_beeper))
+def move(): refresh(_board.move)
+def turn_left(): refresh(_board.turn_left)
+def pick_beeper(): refresh(_board.pick_beeper)
+def put_beeper(): refresh(_board.put_beeper)
 def front_is_clear(): return _board.front_is_clear()
 def right_is_clear(): return _board.right_is_clear()
 def left_is_clear(): return _board.left_is_clear()

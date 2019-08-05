@@ -17,9 +17,12 @@ class Board(object):
         self.screen = None
         self.beepers = []
         self.construct_map(map_path)
+        self.start_screen()
+        self.draw()
 
     def __enter__(self):
         self.start_screen()
+        self.draw()
         return self
 
     def __exit__(self, *args):
@@ -36,6 +39,12 @@ class Board(object):
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         # Karel on beeper
         curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+        # Exception First
+        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+        # Exception Second
+        curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        # Complete Message
+        curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     def end_screen(self):
         time.sleep((100.0-self.speed)/100.0)
@@ -110,13 +119,14 @@ class Board(object):
         self.speed = spd
 
     def draw_exception(self, exception):
-        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
         self.screen.addstr(0, 0, str(exception), curses.color_pair(5))
         ch = self.screen.getch()
         if chr(ch) is 'c':
             exit(1)
-        curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_BLACK)
         self.screen.addstr(0, 0, str(exception), curses.color_pair(6))
+
+    def draw_complete(self):
+        self.screen.addstr(0, 0, 'Program Complete! Press any key to exit.', curses.color_pair(7))
 
     def karel_char(self):
         # index will be in (-2, -1, 1, 2)
@@ -182,3 +192,8 @@ class Board(object):
 
     def holding_beepers(self):
         return self.karel.holding_beepers()
+    
+    def __del__(self):
+        self.draw_complete()
+        self.screen.getch()
+        self.end_screen()
