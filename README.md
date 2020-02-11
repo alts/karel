@@ -9,7 +9,7 @@
 
 ## Write simple Karel programs
 
-Writing in Python is **super fast and easy**! Save a text file `YOUR_PROGRAM.py` in this folder, use import and start writing code!
+Writing in Python is **super fast and easy**! Save a text file `YOUR_PROGRAM.py` in this folder, use import and start coding!
 
 ```python
 from karel_run import *
@@ -19,7 +19,9 @@ turn_left()
 move()
 ```
 
-> For a true linux executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559), then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
+> For a true unix executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559), then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
+
+
 
 ## Karel functions
 
@@ -49,6 +51,7 @@ pause()      # Pause execution, press any key to continue
 stop()       # End execution
 ```
 
+
 ## Karel world
 
 Karel maps are also simple text files and look like this one:
@@ -61,6 +64,7 @@ Karel is represented by the arrow (`^`) looking up. There are two walls (`#`) an
 > Planing to write maps? Check out the vim highlighting! :)
 
 
+
 ## Run your program
 
 Open the terminal and write this command:
@@ -71,6 +75,8 @@ python3 YOUR_PROGRAM.py YOUR_MAP.karelmap
 
 Press `Q` to quit or `P` to pause program.
 Program pauses when Karel tries to make an illegal move.
+
+
 
 ## Try out your map with *interactive*
 
@@ -87,6 +93,7 @@ You can now use your keyboard to control Karel.
     I  ... pick_beeper()
     U  ... put_beeper()
     Q  ... stop()
+
 
 
 
@@ -128,7 +135,7 @@ This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant
 
 ![](images/langtons_ant.gif)
 
-The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
+The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `04_140x50`.
 
 <details>
   <summary>Langton's ant Python code</summary>
