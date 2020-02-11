@@ -5,6 +5,8 @@
 >
 > Stephen Altamirano (`alts/karel`)
 
+![introduction_00](images/introduction_00.gif)
+
 ## Write simple Karel programs
 
 Writing in Python is super fast and easy! Save a `YOUR_PROGRAM.py` text file in this folder, import all the functions and start writing code!
@@ -113,7 +115,9 @@ else:
 
 ### Introduction
 
-Run this with worlds `00` - `02_window`, Karel will walk to the wall and then search for a treasure in the walls.
+Run this with worlds `00` - `03_window`, Karel will walk to the wall and then search for a treasure in the walls.
+
+![introduction_00](images/introduction_01.gif)     ![introduction_01](images/introduction_01.gif)     ![introduction_03](images/introduction_03.gif)
 
 ```python
 from karel_run import *
@@ -137,6 +141,10 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 
 This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant), using a single beeper to mark a tile as "Black" or picks it up to make it "White".
 
+![langtons_ant](images/langtons_ant.gif)
+
+The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
+
 ```python
 from karel_run import *
 
@@ -153,5 +161,5 @@ while True:
         move()        # move forward one unit
 ```
 
-The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
+
 

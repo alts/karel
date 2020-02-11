@@ -177,6 +177,7 @@ class Board(object):
     MAX_SPEED = 100.0
 
     def __init__(self, map_path, speed=50):
+        self.no_screen_immediate_end = True
         self.karel, self.map = construct_map(map_path)
         self.speed = self.valid_speed(speed)
         self.screen = None
@@ -231,9 +232,10 @@ class Board(object):
         self.screen = curses.initscr()
         my, mx = self.screen.getmaxyx()
         if my < self.height or mx < self.width:
-            raise RuntimeError("Window not big enough ({}, {}) / "
-                               "World too big ({}, {})"
-                               .format(mx, my, self.width, self.height))
+            message = ("Window too small ({}, {}) and "
+                       "World too big ({}, {})"
+                       ).format(mx, my, self.width, self.height)
+            raise RuntimeError(message)
         curses.start_color()
         # Wall
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_WHITE)
@@ -259,6 +261,7 @@ class Board(object):
         # Empty tile
         curses.init_pair(8, curses.COLOR_YELLOW, curses.COLOR_BLACK)
         self.color_empty = curses.color_pair(8)
+        self.no_screen_immediate_end = False
 
     def wait(self):
         time.sleep((self.MAX_SPEED - self.speed) / self.MAX_SPEED)
@@ -359,5 +362,6 @@ class Board(object):
         return isinstance(self.karel_tile, Beeper)
 
     def __del__(self):
-        self.complete()
+        if not self.no_screen_immediate_end:
+            self.complete()
         curses.endwin()

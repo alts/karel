@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from karel_run import *
 
 set_speed(100)
