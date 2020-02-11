@@ -1,6 +1,6 @@
 # Karel (now in Python)
 
-> Karel is a pretty snazzy environment for learning to program. You can [read about it here](http://en.wikipedia.org/wiki/Karel_(programming_language\)).
+> Karel is a pretty snazzy environment for learning to program. You can [read about it here](https://en.wikipedia.org/wiki/Karel_(programming_language)).
 > I decided to write a Karel environment for Python, after seeing that all of the others had too many dependencies for beginners.
 >
 > Stephen Altamirano (`alts/karel`)
@@ -88,53 +88,40 @@ You can now use your keyboard to control Karel.
     ⮕ ... turn_right()
     I  ... pick_beeper()
     U  ... put_beeper()
+    Q  ... stop()
+
+
 
 ## Examples
 
-### Simple program
+You can try these examples or study them for great kNoWlEdGe. You can always quit their execution with `Q`.
 
-Make a couple of moves, turn three times and try to move.
-If the first movements or last picking beeper raises
-an Exception then the program will be paused until any
-key is pressed (`Q` still quits however).
-
-```python
-from karel_run import *
-
-# Simple Karel program
-move()
-move()
-turn_left()
-turn_left()
-turn_left()
-if not front_is_blocked():
-    move()
-else:
-    pick_beeper()
-```
-
-### Introduction
+### Example treasure
 
 Run this with worlds `00` - `03_window`, Karel will walk to the wall and then search for a treasure in the walls.
 
 ![introduction_00](images/introduction_01.gif)     ![introduction_01](images/introduction_01.gif)     ![introduction_03](images/introduction_03.gif)
 
-```python
-from karel_run import *
-
-while not front_is_blocked():
-    move()
-
-while not front_is_treasure():
-    turn_left()
-    if front_is_blocked():
-        turn_left()
-    # FIX: add else
-    move()
-    turn_right()
-```
-
 The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/doi/abs/10.1145/2492686).
+
+<details>
+  <summary>Karel searching for treasure Python code</summary>
+
+  ```python
+  from karel_run import *
+  
+  while not front_is_blocked():
+      move()
+  
+  while not front_is_treasure():
+      turn_left()
+      if front_is_blocked():
+          turn_left()
+      # FIX: add else
+      move()
+      turn_right()
+  ```
+</details>
 
 
 ### Langton
@@ -145,21 +132,21 @@ This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant
 
 The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
 
-```python
-from karel_run import *
+<details>
+  <summary>Langton's ant Python code</summary>
 
-set_speed(100)
-
-while True:
-    if not beeper_is_present():  # At a white square
-        put_beeper()  # flip the color of the square
-        turn_right()  # turn 90° right
-        move()        # move forward one unit
-    else:  # At a black square
-        pick_beeper() # flip the color of the square
-        turn_left()   # turn 90° left
-        move()        # move forward one unit
-```
-
-
-
+  ```python
+  from karel_run import *
+  set_speed(100)
+  
+  while True:
+      if not beeper_is_present():  # At a white square
+          put_beeper()  # flip the color of the square
+          turn_right()  # turn 90° right
+          move()        # move forward one unit
+      else:  # At a black square
+          pick_beeper() # flip the color of the square
+          turn_left()   # turn 90° left
+          move()        # move forward one unit
+  ```
+</details>
