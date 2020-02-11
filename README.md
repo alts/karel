@@ -5,7 +5,7 @@
 >
 > *Stephen Altamirano (`alts/karel`)*
 
-<center><img src="images/introduction_00.gif" alt="introduction_00" /></center>
+![](images/introduction_00.gif)
 
 ## Write simple Karel programs
 
@@ -98,7 +98,7 @@ You can try these examples or study them for great kNoWlEdGe. You can always qui
 
 Run this with worlds `00` - `03_window`, Karel will walk to the wall and then search for a treasure in the walls.
 
-<center><img src="images/introduction_00.gif" alt="introduction_00"/>&emsp;&emsp;&emsp;&emsp;<img src="images/introduction_01.gif" alt="introduction_01"/>&emsp;&emsp;&emsp;&emsp;<img src="images/introduction_03.gif" alt="introduction_03"/></centrer>
+![](images/introduction_00.gif)&emsp;![](images/introduction_01.gif)&emsp;![](images/introduction_03.gif)
 
 The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/doi/abs/10.1145/2492686).
 
@@ -126,7 +126,7 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 
 This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant), using a single beeper to mark a tile as "Black" or picks it up to make it "White".
 
-<center><img src="images/langtons_ant.gif" alt="langtons_ant" /></center>
+![](images/langtons_ant.gif)
 
 The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
 
