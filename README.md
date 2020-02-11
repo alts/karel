@@ -3,19 +3,17 @@
 > Karel is a pretty snazzy environment for learning to program. You can [read about it here](https://en.wikipedia.org/wiki/Karel_(programming_language)).
 > I decided to write a Karel environment for Python, after seeing that all of the others had too many dependencies for beginners.
 >
-> Stephen Altamirano (`alts/karel`)
+> *Stephen Altamirano (`alts/karel`)*
 
-![introduction_00](images/introduction_00.gif)
+<center><img src="images/introduction_00.gif" alt="introduction_00" /></center>
 
 ## Write simple Karel programs
 
-Writing in Python is super fast and easy! Save a `YOUR_PROGRAM.py` text file in this folder, import all the functions and start writing code!
+Writing in Python is **super fast and easy**! Save a text file `YOUR_PROGRAM.py` in this folder, use import and start writing code!
 
 ```python
 from karel_run import *
-
-## Simple program ##
-
+# Simple program
 move()
 turn_left()
 move()
@@ -32,8 +30,6 @@ These are the functions exported by `karel_run.py`. Note that the map is loaded 
 move()       # Karel moves in the direction he is facing
 turn_left()  # Karel turns left
 turn_right() # Karel turns right
-pause()      # Pause execution, press any key to continue
-stop()       # End execution
 # Beepers
 pick_beeper() # Karel tries to pick up a beeper
 put_beeper()  # Karel puts down a beeper (if he has any)
@@ -46,9 +42,11 @@ facing_north()  # True if Karel is facing north (^)
 facing_south()  #                         south (v)
 facing_east()   #                          east (>)
 facing_west()   #                          west (<)
-# Settings
+# Settings and execution
 set_speed(100)   # How fast Karel moves, 0 to 100
 set_karel_beepers(None)  # Set Karel's beepers, 0+ and None means inf
+pause()      # Pause execution, press any key to continue
+stop()       # End execution
 ```
 
 ## Karel world
@@ -58,7 +56,7 @@ Karel maps are also simple text files and look like this one:
     1..#...
     #....^.
 
-Karel is represented by the arrow. There are two walls (`#`) and one beeper in the upper right corner (`1`).
+Karel is represented by the arrow (`^`) looking up. There are two walls (`#`) and one beeper in the upper right corner (`1`). There is no treasure (`$`).
 
 > Planing to write maps? Check out the vim highlighting! :)
 
@@ -100,7 +98,7 @@ You can try these examples or study them for great kNoWlEdGe. You can always qui
 
 Run this with worlds `00` - `03_window`, Karel will walk to the wall and then search for a treasure in the walls.
 
-![introduction_00](images/introduction_01.gif)     ![introduction_01](images/introduction_01.gif)     ![introduction_03](images/introduction_03.gif)
+<center><img src="images/introduction_00.gif" alt="introduction_00"/>&emsp;&emsp;&emsp;&emsp;<img src="images/introduction_01.gif" alt="introduction_01"/>&emsp;&emsp;&emsp;&emsp;<img src="images/introduction_03.gif" alt="introduction_03"/></centrer>
 
 The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/doi/abs/10.1145/2492686).
 
@@ -128,7 +126,7 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 
 This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant), using a single beeper to mark a tile as "Black" or picks it up to make it "White".
 
-![langtons_ant](images/langtons_ant.gif)
+<center><img src="images/langtons_ant.gif" alt="langtons_ant" /></center>
 
 The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `12_140x50.karelmap`.
 
