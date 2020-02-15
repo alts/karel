@@ -1,34 +1,52 @@
 #!/usr/bin/env python3
+"""
+
+Note that all locally defined values are prefixed with '_'
+to deter anyone who may be tempted to misuse them.
+"""
+from curses import endwin
 import sys
+import errno
 from karel import *
+
+def karel_help():
+    print("Karel expected usage:")
+    print("python3 YOUR_PROGRAM.py YOUR_WORLD.karelmap")
+    print("\nFor interactive mode:")
+    print("python3 karel_run.py YOUR_WORLD.karelmap")
 
 ###########################################################
 #                     KAREL START-UP                      #
 ###########################################################
 
+
 # Board is loaded and starts the curses window
 try:
-    if len(sys.argv) > 1:
-        _b = Board(sys.argv[1])
-    else:
+    if len(sys.argv) == 1:
         karel_help()
-        exit(1)
-except IOError as e:
-    print("Could not open karel map file:\n" + str(e))
-    exit(2)
-except RuntimeError as r:
-    print("Failed parsing map:\n" + str(r))
-    exit(3)
+        exit(errno.EPERM)
+    _karel, _karel_map = construct_map(sys.argv[1])
+    _w = Window(_karel, _karel_map)
+except IOError as _e:
+    print("Could not open karel map file:\n" + str(_e))
+    exit(errno.ENOENT)
+except RuntimeError as _e:
+    print("Failed parsing map:\n" + str(_e))
+    exit(errno.EINVAL)
+except RobotError as _e:
+    endwin()
+    print("There was a problem with curses:\n" + str(_e))
+    exit(errno.EINVAL)
 
 
 def refresh(func, moved=False):
     """Execute a Board method and redraw. """
     try:
         res = func()
-        _b.redraw(moved)
+        _w.redraw(moved)
         return res
-    except RobotError as w:
-        _b.draw_exception(w)
+    except RobotError as _rob_e:
+        _w.draw_exception(_rob_e)
 
 
 ###########################################################
@@ -37,72 +55,68 @@ def refresh(func, moved=False):
 
 # Movement
 def move():
-    """Karel moves in the direction he is facing. """
-    refresh(_b.move, True)
+    """Karel tries to move in the direction he is facing. """
+    refresh(_w.move, True)
 
 def turn_left():
     """Karel turns left. """
-    refresh(_b.karel.turn_left)
+    refresh(_w.karel.turn_left)
 
 def turn_right():
     """Karel turns right. """
-    refresh(_b.karel.turn_right)
+    refresh(_w.karel.turn_right)
 
 # Beepers
 def pick_beeper():
     """Karel tries to pick up a beeper. """
-    refresh(_b.pick_beeper)
+    refresh(_w.pick_beeper)
 
 def put_beeper():
     """Karel puts down a beeper (if he has any). """
-    refresh(_b.put_beeper)
+    refresh(_w.put_beeper)
 
 def beeper_is_present():
     """True iff Karel stands on a beeper. """
-    return _b.beeper_is_present()
+    return _w.beeper_is_present()
 
 # Walls
 def front_is_blocked():
     """True iff Karel can't move forward. """
-    return _b.front_is_blocked()
+    return _w.front_is_blocked()
 
 def front_is_treasure():
-    """True if Karel is standing in front of a Treasure. """
-    return _b.front_is_treasure()
+    """True iff Karel stands in front of a Treasure. """
+    return _w.front_is_treasure()
 
 # Direction
 def facing_north():
     """True iff Karel is facing north (^). """
-    return _b.karel.facing_north()
+    return _w.karel.facing_north()
 
 def facing_south():
     """True iff Karel is facing south (v). """
-    return _b.karel.facing_south()
+    return _w.karel.facing_south()
 
 def facing_east():
     """True iff Karel is facing east (>). """
-    return _b.karel.facing_east()
+    return _w.karel.facing_east()
 
 def facing_west():
     """True iff Karel is facing west (<). """
-    return _b.karel.facing_west()
+    return _w.karel.facing_west()
 
 # Execution
 def set_speed(spd):
     """Set how fast Karel moves (0 to 100). """
-    _b.speed = _b.valid_speed(spd)
+    _w.speed = _w.valid_speed(spd)
 
 def set_karel_beepers(b=0):
-    """Set Karel's beepers, 0+ and None means inf. """
-    _b.karel.beepers = b if b is None else max(0, round(b))
-
-def stop():
-    """End execution. """
-    _b.complete()
+    """Set Karel's beepers, with None working as inf. """
+    _w.karel.beepers = b if b is None else max(0, round(b))
 
 def pause():
     """Pause execution, press any key to continue. """
-    _b.pause()
+    _w.pause()
 
 
 ###########################################################
@@ -114,14 +128,13 @@ def interactive():
     set_speed(100)  # do not wait
     curses.noecho()
     curses.cbreak()
-    _b.screen.keypad(1)
-    _b.screen.nodelay(True)
+    _w.screen.keypad(1)
     while True:
         # end if user presses 'c'
-        ch = _b.screen.getch()
+        ch = _w.screen.getch()
         if ch != curses.ERR:
             if ch == ord('q'):
-                stop()
+                exit()
             elif ch == curses.KEY_LEFT:
                 turn_left()
             elif ch == curses.KEY_RIGHT:
@@ -133,7 +146,7 @@ def interactive():
             elif ch == ord('i'):
                 pick_beeper()
             else:
-                _b.draw_exception("Use arrows to move, pIck, pUt and Quit.")
+                _w.draw_exception("Use arrows to move, pIck, pUt and Quit.")
         time.sleep(0.1)
 
 
