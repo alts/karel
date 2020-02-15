@@ -1,7 +1,9 @@
 # Karel (now in Python)
 
-> Karel is a pretty snazzy environment for learning to program. You can [read about it here](https://en.wikipedia.org/wiki/Karel_(programming_language)).
-> I decided to write a Karel environment for Python, after seeing that all of the others had too many dependencies for beginners.
+> Karel is a pretty snazzy environment for learning to program.
+> You can [read about it here](https://en.wikipedia.org/wiki/Karel_(programming_language)).\
+> I decided to write a Karel environment for Python, after seeing that all of the others
+> had too many dependencies for beginners.
 >
 > *Stephen Altamirano (`alts/karel`)*
 
@@ -9,7 +11,8 @@
 
 ## Write simple Karel programs
 
-Writing in Python is **super fast and easy**! Save a text file `YOUR_PROGRAM.py` in this folder, use import and start coding!
+Writing in Python is **super fast and easy**!
+Save a text file `YOUR_PROGRAM.py` in this folder, use import and start coding!
 
 ```python
 from karel_run import *
@@ -19,15 +22,17 @@ turn_left()
 move()
 ```
 
-> For a true unix executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559), then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
+> For a true unix executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559),
+> then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
 
 
 
 ## Karel functions
 
-These are the functions exported by `karel_run.py`. Note that the map is loaded and screen started in the moment of `from karel_run import *`. If you only need raw objects and methods see `karel.py`.
+These are the functions you can use to command Karel after importing from `karel_run`:
 
 ```python
+from karel_run import *
 # Movement
 move()       # Karel moves in the direction he is facing
 turn_left()  # Karel turns left
@@ -46,10 +51,14 @@ facing_east()   #                          east (>)
 facing_west()   #                          west (<)
 # Settings and execution
 set_speed(100)   # How fast Karel moves, 0 to 100
-set_karel_beepers(None)  # Set Karel's beepers, 0+ and None means inf
+set_karel_beepers(None)  # Set Karel's beepers, with None working as inf.
 pause()      # Pause execution, press any key to continue
-stop()       # End execution
+exit()       # End execution
 ```
+
+Note that the map is loaded and screen started in the moment of `from karel_run import *`.
+If you only need raw objects and methods see `karel.py`.
+
 
 
 ## Karel world
@@ -59,7 +68,9 @@ Karel maps are also simple text files and look like this one:
     1..#...
     #....^.
 
-Karel is represented by the arrow (`^`) looking up. There are two walls (`#`) and one beeper in the upper right corner (`1`). There is no treasure (`$`).
+Karel is represented by the arrow (`^`) looking up.
+There are two walls (`#`) and one beeper in the upper right corner (`1`).
+There is no treasure (`$`).
 
 > Planing to write maps? Check out the vim highlighting! :)
 
@@ -99,11 +110,12 @@ You can now use your keyboard to control Karel.
 
 ## Examples
 
-You can try these examples or study them for great kNoWlEdGe. You can always quit their execution with `Q`.
+You can try these examples or study them for great knowledge. You can always quit their execution with `Q`.
 
 ### Example treasure
 
-Run this with worlds `00` - `03_window`, Karel will walk to the wall and then search for a treasure in the walls.
+Run the program `example.py` (also below) with worlds `00` - `03_window`.
+Karel will walk to the wall and then search for a treasure in the walls.
 
 ![](images/introduction_00.gif)&emsp;![](images/introduction_01.gif)&emsp;![](images/introduction_03.gif)
 
@@ -129,9 +141,10 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 </details>
 
 
-### Langton
+### Langton's ant
 
-This makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant), using a single beeper to mark a tile as "Black" or picks it up to make it "White".
+The program `langton.py` (also below) makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant),
+using a single beeper to mark a tile as "Black" and Karel can pick it up to make it "White".
 
 ![](images/langtons_ant.gif)
 
