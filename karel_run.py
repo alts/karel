@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""
+"""Karel implementation in Python (with curses).
+
+Import this file to command Karel using simple functions.
+The curses screen starts upon import.
 
 Note that all locally defined values are prefixed with '_'
 to deter anyone who may be tempted to misuse them.
