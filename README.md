@@ -168,14 +168,14 @@ The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
   set_speed(100)
 
   while True:  # repeat
-      if beeper_is_present:  # At a black square
-          pick_beeper()          # flip the color of the square
-          turn_left()            # turn 90° left
-          move()                 # move forward one unit
-      else:                  # At a white square
-          put_beeper()           # flip the color of the square
-          turn_right()           # turn 90° right
-          move()                 # move forward one unit
+      if beeper_is_present(): # At a black square
+          pick_beeper()           # flip the color of the square
+          turn_left()             # turn 90° left
+          move()                  # move forward one unit
+      else:                   # At a white square
+          put_beeper()            # flip the color of the square
+          turn_right()            # turn 90° right
+          move()                  # move forward one unit
   ```
 </details>
 
