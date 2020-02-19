@@ -11,9 +11,9 @@
 
 ## Installation
 
-This should be as simple as opening your terminal and writing:
+Installing should be as simple as opening your terminal and writing:
 ```bash
-pip3 install .  # the dot is the path to this directory
+pip3 install karel_robot
 ```
 
 ## Write simple Karel programs
@@ -36,38 +36,38 @@ move()
 
 ## Karel functions
 
-These are the functions you can use to command Karel after importing from `karel_robot`:
+These are the functions you can use to command Karel after importing from `karel_robot.run`:
 
-```python
-from karel_robot.run import *
-# Movement
-move()              # Karel moves in the direction he is facing
-turn_left()         # Karel turns left
-turn_right()        # Karel turns right
-# Beepers
-pick_beeper()       # Karel tries to pick up a beeper
-put_beeper()        # Karel puts down a beeper (if he has any)
-beeper_is_present() # True if Karel stands on a beeper
-# Walls
-front_is_blocked()  # True if Karel can't move forward
-front_is_treasure() # True if Karel is standing in front of a Treasure
-# Direction
-facing_north()      # True if Karel is facing north (^)
-facing_south()      #                         south (v)
-facing_east()       #                          east (>)
-facing_west()       #                          west (<)
-# Settings and execution
-set_karel_beepers(None)  # Set Karel's beepers, with None as inf.
-set_speed(100)      # How fast Karel moves, 0 to 100
-pause()             # Pause execution, press any key to continue
-exit()              # End execution
-```
+| Function              | Result                                            |
+|-----------------------|---------------------------------------------------|
+| **Movement**          |                                                   |
+| `move()`              | Karel moves in the direction he is facing         |
+| `turn_left()`         | Karel turns left                                  |
+| `turn_right()`        | Karel turns right                                 |
+| **Beepers**           |                                                   |
+| `pick_beeper()`       | Karel tries to pick up a beeper                   |
+| `put_beeper()`        | Karel puts down a beeper (if he has any)          |
+| `beeper_is_present()` | True iff Karel stands on a beeper                 |
+| **Walls**             |                                                   |
+| `front_is_blocked()`  | True iff Karel can't move forward                 |
+| `front_is_treasure()` | True iff Karel is standing in front of a Treasure |
+| **Direction**         |                                                   |
+| `facing_north()`      | True iff Karel is facing north (`^`)              |
+| `facing_south()`      | True iff Karel is facing south (`v`)              |
+| `facing_east()`       | True iff Karel is facing east (`>`)               |
+| `facing_west()`       | True iff Karel is facing west (`<`)               |
+| **Execution**         |                                                   |
+| `set_karel_beepers(None)`| Set Karel's beepers, with `None` as inf.       |
+| `set_speed(100)`      | How fast Karel moves, 0 to 100                    |
+| `pause()`             | Pause execution, press any key to continue        |
+| `exit()`              | End execution                                     |
+
 
 Note that the map is loaded and screen started in the moment of import:
 ```python
 from karel_robot.run import *
 ```
-If you only need raw objects and methods see the directory `karel_robot`.
+If you only need raw objects and methods see the directory [karel_robot](./karel_robot).
 
 
 
@@ -78,7 +78,7 @@ Karel maps are also simple text files and look like this one:
     1..#...
     #....^.
 
-Karel is represented by the arrow (`^`) looking up on the empty tile (`.`).
+Karel is represented by the arrow (`^`) looking up on the empty tile (`.`).\
 There are two walls (`#`) and one beeper in the upper right corner (`1`).
 There is no treasure (`$`).
 
@@ -94,7 +94,7 @@ Open the terminal and write this command:
 python3 YOUR_PROGRAM.py YOUR_MAP.karelmap
 ```
 
-Press `Q` to quit or `P` to pause program.
+Press <kbd>Q</kbd> to quit or <kbd>P</kbd> to pause program.
 Program pauses when Karel tries to make an illegal move.
 
 
@@ -108,19 +108,19 @@ karel YOUR_MAP.karelmap
 
 You can now use your keyboard to control Karel.
 
-    ⬆ ... move()
-    ⬅ ... turn_left()
-    ⮕ ... turn_right()
-    I  ... pick_beeper()
-    U  ... put_beeper()
-    Q  ... stop()
-
-
-
+|     Key    |  Function       |
+|------------|-----------------|
+|<kbd>↑</kbd>| `move()`        |
+|<kbd>←</kbd>| `turn_left()`   |
+|<kbd>→</kbd>| `turn_right()`  |
+|<kbd>I</kbd>| `pick_beeper()` |
+|<kbd>U</kbd>| `put_beeper()`  |
+|<kbd>Q</kbd>| `stop()`        |
 
 ## Examples
 
-You can try these examples or study them for great knowledge. You can always quit their execution with `Q`.
+You can try these examples or study them for great knowledge.
+You can always quit their execution with <kbd>Q</kbd>.
 
 ### Example treasure
 
