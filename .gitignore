@@ -1,1 +1,15 @@
+__pycache__
 *.pyc
+build/
+dist/
+karel_robot.egg-info/
+
+# Editors
+.vscode
+.idea
+
+# macOS
+.DS_Store
+
+# don't add files like tmp.txt
+tmp*

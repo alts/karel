@@ -7,15 +7,22 @@
 >
 > *Stephen Altamirano (`alts/karel`)*
 
-![](images/introduction_00.gif)
+![Karel searching for Treasure.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_00.gif)
+
+## Installation
+
+This should be as simple as opening your terminal and writing:
+```bash
+pip3 install .  # the dot is the path to this directory
+```
 
 ## Write simple Karel programs
 
-Writing in Python is **super fast and easy**!
+Coding in Python is **super fast and easy**!
 Save a text file `YOUR_PROGRAM.py` in this folder, use import and start coding!
 
 ```python
-from karel_run import *
+from karel_robot.run import *
 # Simple program
 move()
 turn_left()
@@ -29,35 +36,38 @@ move()
 
 ## Karel functions
 
-These are the functions you can use to command Karel after importing from `karel_run`:
+These are the functions you can use to command Karel after importing from `karel_robot`:
 
 ```python
-from karel_run import *
+from karel_robot.run import *
 # Movement
-move()       # Karel moves in the direction he is facing
-turn_left()  # Karel turns left
-turn_right() # Karel turns right
+move()              # Karel moves in the direction he is facing
+turn_left()         # Karel turns left
+turn_right()        # Karel turns right
 # Beepers
-pick_beeper() # Karel tries to pick up a beeper
-put_beeper()  # Karel puts down a beeper (if he has any)
+pick_beeper()       # Karel tries to pick up a beeper
+put_beeper()        # Karel puts down a beeper (if he has any)
 beeper_is_present() # True if Karel stands on a beeper
 # Walls
 front_is_blocked()  # True if Karel can't move forward
 front_is_treasure() # True if Karel is standing in front of a Treasure
 # Direction
-facing_north()  # True if Karel is facing north (^)
-facing_south()  #                         south (v)
-facing_east()   #                          east (>)
-facing_west()   #                          west (<)
+facing_north()      # True if Karel is facing north (^)
+facing_south()      #                         south (v)
+facing_east()       #                          east (>)
+facing_west()       #                          west (<)
 # Settings and execution
-set_speed(100)   # How fast Karel moves, 0 to 100
-set_karel_beepers(None)  # Set Karel's beepers, with None working as inf.
-pause()      # Pause execution, press any key to continue
-exit()       # End execution
+set_karel_beepers(None)  # Set Karel's beepers, with None as inf.
+set_speed(100)      # How fast Karel moves, 0 to 100
+pause()             # Pause execution, press any key to continue
+exit()              # End execution
 ```
 
-Note that the map is loaded and screen started in the moment of `from karel_run import *`.
-If you only need raw objects and methods see `karel.py`.
+Note that the map is loaded and screen started in the moment of import:
+```python
+from karel_robot.run import *
+```
+If you only need raw objects and methods see the directory `karel_robot`.
 
 
 
@@ -68,7 +78,7 @@ Karel maps are also simple text files and look like this one:
     1..#...
     #....^.
 
-Karel is represented by the arrow (`^`) looking up.
+Karel is represented by the arrow (`^`) looking up on the empty tile (`.`).
 There are two walls (`#`) and one beeper in the upper right corner (`1`).
 There is no treasure (`$`).
 
@@ -93,7 +103,7 @@ Program pauses when Karel tries to make an illegal move.
 
 Use the command:
 ```bash
-python3 karel_run.py YOUR_MAP.karelmap
+karel YOUR_MAP.karelmap
 ```
 
 You can now use your keyboard to control Karel.
@@ -114,10 +124,10 @@ You can try these examples or study them for great knowledge. You can always qui
 
 ### Example treasure
 
-Run the program `example.py` (also below) with worlds `00` - `03_window`.
+Run the program `treasure.py` (also below) with worlds `00` - `03_window`.
 Karel will walk to the wall and then search for a treasure in the walls.
 
-![](images/introduction_00.gif)&emsp;![](images/introduction_01.gif)&emsp;![](images/introduction_03.gif)
+![Karel finds the treasure.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_00.gif)&emsp;![Karel cycles.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_01.gif)&emsp;![Karel hits the wall.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_03.gif)
 
 The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/doi/abs/10.1145/2492686).
 
@@ -125,7 +135,7 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
   <summary>Karel searching for treasure Python code</summary>
 
   ```python
-  from karel_run import *
+  from karel_robot.run import *
   
   while not front_is_blocked():
       move()
@@ -146,7 +156,7 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 The program `langton.py` (also below) makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant),
 using a single beeper to mark a tile as "Black" and Karel can pick it up to make it "White".
 
-![](images/langtons_ant.gif)
+![Karel programmed as Langton's ant](https://raw.githubusercontent.com/xsebek/karel/master/images/langtons_ant.gif)
 
 The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `04_140x50`.
 
@@ -154,17 +164,32 @@ The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
   <summary>Langton's ant Python code</summary>
 
   ```python
-  from karel_run import *
+  from karel_robot.run import *
   set_speed(100)
-  
-  while True:
-      if not beeper_is_present():  # At a white square
-          put_beeper()  # flip the color of the square
-          turn_right()  # turn 90° right
-          move()        # move forward one unit
-      else:  # At a black square
-          pick_beeper() # flip the color of the square
-          turn_left()   # turn 90° left
-          move()        # move forward one unit
+
+  while True:  # repeat
+      if beeper_is_present:  # At a black square
+          pick_beeper()          # flip the color of the square
+          turn_left()            # turn 90° left
+          move()                 # move forward one unit
+      else:                  # At a white square
+          put_beeper()           # flip the color of the square
+          turn_right()           # turn 90° right
+          move()                 # move forward one unit
   ```
 </details>
+
+
+
+## Credits 🤖
+
+The original author is Stephen Altamirano (@alts).
+Recently this has been updated by @Tetragramm and @xsebek.
+
+
+## LICENSE
+
+This project is released under GNU GPLv3 license in hopes that
+it will be useful. You are encouraged to share this *freely* and can
+even sell it provided everyone will still be able to read and modify
+the source code, just like you are :wink:
