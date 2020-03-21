@@ -1,6 +1,7 @@
 """Example code with more OOP approach.
 """
-import karel_robot as robot
+from karel_robot import Window
+from karel_robot.parsers import parse_map
 
 
 def main():
@@ -10,8 +11,8 @@ def main():
     on screen when needed. Note however that the whole screen is redrawn,
     instead of only the last tile.
     """
-    karel, karelmap = robot.parse_map("levels/00_window.karelmap")
-    w = robot.Window(karel=karel, karel_map=karelmap)
+    karel, karelmap = parse_map("levels/00_window.karelmap")
+    w = Window(karel=karel, tiles=karelmap)
     w.pause()
     w.move()
     w.karel.turn_left()

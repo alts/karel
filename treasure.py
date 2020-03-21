@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Program Karel to search for treasure.
+""" Program Karel to search for treasure.
 
 The idea is from a paper on cooperative education in CS1:
 https://dl.acm.org/doi/abs/10.1145/2492686

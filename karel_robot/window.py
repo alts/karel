@@ -1,164 +1,382 @@
-""" Window, the class that draws the board on screen.
+r""" This file is part of karel_robot package.
 
-Start Karel program with `from karel_robot.run import *` instead.
-For more details see README.
+Window to Karel's world
+=======================
+
+This file defines the manager class Window, that draws the board
+on screen and shows messages to the user on the bottom line.
+
+See the README in the package root folder for general take and the
+one in this folder for details.
+
+
+LICENSE
+^^^^^^^
+
+A GPLv3/later license applies::
+
+    The karel_robot package is free software: you can redistribute it
+    and/or modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation, either version 3
+    of the License, or (at your option) any later version.
+
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with the karel_robot package.
+If not, see `<https://www.gnu.org/licenses/>`_.
 """
+from __future__ import annotations
+from typing import Callable
+from functools import wraps
+from time import sleep
 import curses
-import time
+from .board import *
 
-from .world import *
+RectangleMap = TypeVar('RectangleMap')
+
+ignore_robot_errors: bool = False
+""" Global variable - change only for quick hacks and fun. """
 
 
-class Window(World):
-    """Cursed window that draws a Board.
+class KeyHandle(NamedTuple):
+    repeat: bool
+    handle: Callable[[], None]
+
+
+KeysHandler = Dict[int, KeyHandle]
+""" Dictionary for specifying response to user keypress
+    
+See :func:`Window.get_char`.
+"""
+
+
+class Window(BoardView):
+    """ Cursed window that draws a Board and interacts with user.
 
     Note that the curses screen is started on `__init__`.
     """
 
-    MAX_SPEED = 100.0
+    # all colors are set in `start_screen`
+    class Colors:
+        """ Curses colors for printing in terminal.
+        """
 
-    COLORS = {  # Window attribute : (color foreground, background)
-        'color_clear': (curses.COLOR_BLACK, None),
-        'color_wall': (curses.COLOR_WHITE, curses.COLOR_WHITE),
-        'color_empty': (curses.COLOR_YELLOW, None),
-        'color_karel': (curses.COLOR_CYAN, None),
-        'color_beeper': (curses.COLOR_GREEN, None),
-        'color_karel_beeper': (curses.COLOR_RED, None),
-        'color_exception': (curses.COLOR_RED, None),
-        'color_complete': (curses.COLOR_GREEN, None)
-    }
+        wall: int
+        empty: int
+        karel: int
+        beeper: int
+        karel_beeper: int
+        exception: int
+        complete: int
+        clear: int
 
-    def __init__(self, karel, karel_map, speed=(MAX_SPEED / 2)):
-        super(Window, self).__init__(karel, karel_map)
-        self.screen = None
-        self.speed = self.valid_speed(speed)
-        # all colors are set in start screen
-        self.color_clear = None
-        self.color_wall = None
-        self.color_empty = None
-        self.color_karel = None
-        self.color_beeper = None
-        self.color_karel_beeper = None
-        self.color_exception = None
-        self.color_complete = None
-        self.start_screen()
+    #################################################################
+
+    def __init__(
+        self,
+        karel: Karel,
+        tiles: RectangleMap = None,
+        x_map: int = None,
+        y_map: int = None,
+        speed: Optional[float] = 2.0,
+        lookahead: int = 1,
+    ):
+        """
+        Args:
+            karel (Karel): The robot or default Karel if None.
+            x_map: The x_view of the map.
+            y_map: The y_view of the map.
+            tiles (Optional[Any]): Mutable map supporting tiles[y_map][x_map],
+                   like list or dict (if dict then indices
+                   not in tiles are considered Tile).
+            speed: The number of ticks per second.
+            lookahead: The number of fields visible ahead of Karel.
+
+        Description copied from :class:`BoardView`, :class:`Board`
+        and :class:`KarelMap`.
+        """
+        # First setup whole screen
+        self.speed = max(0.0, speed) or None
+        """ Roughly the number of ticks per second, ``None`` meaning no wait. """
+
+        self.screen = curses.initscr()
+        """ Cursed screen representing the whole terminal window. """
+        self._del_screen = True
+
+        self.y_screen, self.x_screen = self.screen.getmaxyx()
+        """ Dimension of the whole terminal screen. """
+
+        self.setup_screen()
+        self._del_setup = True
+        x_view, y_view = self.get_board_size(x_map=x_map, y_map=y_map)
+        super().__init__(
+            x_view=x_view,
+            y_view=y_view,
+            x_map=x_map,
+            y_map=y_map,
+            karel=karel,
+            tiles=tiles,
+            lookahead=lookahead,
+        )
+        # NOTE: sub-windows compete with parent for same positions, no overlay
+        self.board_win = self.screen.subwin(self.y_view + 2, self.x_view + 2, 0, 0)
+        """ The sub-window where Karel and his board is drawn. """
+
+        self.message_win = curses.newwin(1, self.x_screen, self.y_screen - 1, 0)
+        """ The sub-window where messages to user are printed. """
+        self._last_message_len = 0
+
+        self.handle: KeysHandler = {
+            ord("q"): KeyHandle(repeat=False, handle=lambda: exit()),
+            ord("p"): KeyHandle(repeat=False, handle=self.pause),
+            curses.KEY_RESIZE: KeyHandle(repeat=True, handle=self.screen_resize),
+        }
+        """ What to do on user response, in ``key:(retry, function)`` format. """
+
+        self.draw()
+        self.no_complete = False
+
+    def draw(self):
+        """ Draw the whole board. """
+        self.board_win.border()
+        for y in range(self.y_view):
+            for x in range(self.x_view):
+                self.draw_tile(x, y)
+        self.draw_karel_tile().board_win.refresh()
+        return self.user_check()
+
+    def redraw(self, moved=False):
+        """ Redraw Karel's tile and the one he `moved` from."""
+        self.draw_karel_tile(moved).board_win.refresh()
+        return self.user_check()
+
+    def pause(self):
+        """ Wait for keypress. """
+        self.draw_exception("PAUSED")
+
+    def move(self):
+        if super(Window, self).move().advanced:
+            self.draw()
+
+    # IMPLEMENTATION DETAILS ########################################
+
+    def setup_screen(self):
+        """ Initialize cursed screen. """
+        curses.noecho()  # turn off automatic echoing of keys to the screen
+        curses.cbreak()  # react to keys instantly
+        self.screen.keypad(True)  # curses process special keys
+        curses.curs_set(False)  # make cursor invisible
+        self.setup_colors()
+
+    def setup_colors(self):
+        """ Setup curses colors and store them in :class:`Window.Colors`. """
+        curses.start_color()
+        # Window attribute : (Color foreground, optional Color background)
+        colors = {
+            "wall": (curses.COLOR_WHITE, curses.COLOR_WHITE),
+            "empty": (curses.COLOR_YELLOW, None),
+            "karel": (curses.COLOR_CYAN, None),
+            "beeper": (curses.COLOR_GREEN, None),
+            "karel_beeper": (curses.COLOR_RED, None),
+            "exception": (curses.COLOR_RED, None),
+            "complete": (curses.COLOR_GREEN, None),
+            "clear": (curses.COLOR_BLACK, None),
+        }
+        for i, (attr, (col_fg, col_bg)) in enumerate(colors.items(), start=1):
+            curses.init_pair(i, col_fg, col_bg or curses.COLOR_BLACK)
+            setattr(self.Colors, attr, curses.color_pair(i))
+
+    def user_check(self):
+        """ Wait a bit for user ending/pausing program.
+
+        :raises SystemExit: exits the program if user presses the Q key
+        """
+        self.get_char(no_delay=True, handle=self.handle)
+
+    def screen_resize(self):
+        """ Recalculate the dimensions and draw the board again. """
+        sleep(1/20)
+        self.board_win.clear()
+        self.message_win.clear()
+        self.y_screen, self.x_screen = self.screen.getmaxyx()
+        self.x_view, self.y_view = self.get_board_size(
+            x_map=self.x_map, y_map=self.y_map
+        )
+        self.board_win.resize(self.y_view + 2, self.x_view + 2)
+        self.message_win.mvwin(self.y_screen - 1, 0)
+        self.message_win.resize(1, self.x_screen)
+        self.message_win.refresh()
+        self.reset_offset()
         self.draw()
 
-    def start_screen(self):
-        """Start curses screen and set colors. """
-        self.screen = curses.initscr()
-        self.board_fits(throw=True)
-        curses.start_color()
-        for i, (attr, (col_fg, col_bg)) in enumerate(self.COLORS.items()):
-            curses.init_pair(i + 1, col_fg, (curses.COLOR_BLACK if col_bg is None else col_bg))
-            setattr(self, attr, curses.color_pair(i + 1))
+    def get_char(self, no_delay=True, restore=False, handle: KeysHandler = None):
+        def handle_char(char):
+            handle[char].handle()
+            return handle[char].repeat
 
-    def board_fits(self, throw=False):
-        """Check the board fits the window.
-        :raises: RobotError if `throw` is True and board does not fit
-        """
-        screen_y, screen_x = self.screen.getmaxyx()
-        fits = screen_y > self.height and screen_x >= self.width
-        if not fits and throw:
-            raise RobotError("Window too small ({}, {}) and World too big ({}, {} + 1)"
-                             .format(screen_x, screen_y, self.width, self.height))
-        return fits
-
-    def valid_speed(self, speed):
-        """Return the speed in `(0, MAX_SPEED)` or either end. """
-        if speed < 0:
-            return 0
-        if speed > self.MAX_SPEED:
-            return self.MAX_SPEED
-        return speed
+        while True:
+            self.screen.nodelay(no_delay)
+            if no_delay:
+                self.wait()
+            ch = self.screen.getch()
+            self.screen.nodelay(restore)
+            if handle and ch in handle:
+                if handle_char(ch):
+                    continue
+            elif handle and curses.KEY_HELP in handle:
+                if handle_char(curses.KEY_HELP):
+                    continue
+            return ch
 
     def wait(self):
-        """Wait for `(m-x)/m` seconds. """
-        time.sleep((self.MAX_SPEED - self.speed) / self.MAX_SPEED)
+        """ If speed set, then wait for `1/speed` of a second. """
+        if self.speed is not None:
+            sleep(1 / self.speed)
+        return self
 
-    def draw_tile(self, column, row, tile):
-        """Draw the tile on (column, row). """
+    def get_board_size(self, x_map, y_map):
+        """
+
+        :param x_map:
+        :param y_map:
+        :return: the size of view without border
+        """
+        y_view = self.y_screen - 3  # one line for messages
+        x_view = self.x_screen - 2  # two for border
+        if y_view < 1 or x_view < 1:
+            raise RuntimeError(
+                "Screen too small "
+                f"({self.x_screen, self.y_screen})"
+                f" for board ({self.x_map, self.y_map}) "
+                "Minimum: 3columns 4rows"
+            )
+        if y_map:
+            y_view = min(y_map, y_view)
+        if x_map:
+            x_view = min(x_map, x_view)
+        return x_view, y_view
+
+    # DRAWING #######################################################
+
+    def draw_tile(self, x, y):
+        """ Draw the tile on (x_map, y_map). """
+        tile = self.get_view(x, y)
         if isinstance(tile, Wall):
-            color = self.color_wall
+            color = self.Colors.wall
         elif isinstance(tile, (Beeper, Treasure)):
-            color = self.color_beeper
+            color = self.Colors.beeper
         else:
-            color = self.color_empty
-        self.screen.addstr(row, column, str(tile), color)
+            color = self.Colors.empty
+        self.board_win.addch(y + 1, x + 1, str(tile), color)
         return self
 
     def draw_karel_tile(self, moved=False):
-        """Draw the tile Karel is standing on and the one he `moved` from. """
-        self.screen.addstr(
-            self.karel.position[1],
-            self.karel.position[0],
+        """ Draw the tile Karel is standing on and the one he ``moved`` from. """
+        self.board_win.addch(
+            self.karel_pos.y + 1,  # 1 border line
+            self.karel_pos.x + 1,
             self.karel.to_dir(),
-            self.color_karel_beeper if self.beeper_is_present() else self.color_karel
+            self.Colors.karel_beeper if self.beeper_is_present() else self.Colors.karel,
         )
         if moved:
-            x, y = self.karel.position
+            x, y = self.karel_pos
             vx, vy = self.karel.facing
-            self.draw_tile(x - vx, y - vy, self.map[y - vy][x - vx])
+            self.draw_tile(x - vx, y - vy)
         return self
-
-    def screen_finalize(self):
-        """Keep cursor below and check for user ending/pausing program.
-        :exception: exits the program if user presses 'Q'
-        """
-        self.screen.addstr(self.height + 1, 0, ' ')
-        self.screen.refresh()
-        # quit if user presses 'q'
-        self.screen.nodelay(True)
-        self.wait()
-        ch = self.screen.getch()
-        self.screen.nodelay(False)
-        if ch != -1 and chr(ch) == 'q':
-            exit()
-        if ch != -1 and chr(ch) == 'p':
-            self.pause()
-        return self
-
-    def draw(self):
-        """Draw the whole board. """
-        for y, row in enumerate(self.map):
-            for x, tile in enumerate(row):
-                self.draw_tile(x, y, tile)
-        self.draw_karel_tile()
-        return self.screen_finalize()
-
-    def redraw(self, moved=False):
-        """Redraw Karel's tile and the one he `moved` from."""
-        self.draw_karel_tile(moved)
-        return self.screen_finalize()
 
     def draw_exception(self, exception):
-        """Draw exception and wait for keypress.
-        :exception: exits the program if user presses 'Q'
+        """ Draw exception and wait for keypress.
+
+        :raises SystemExit: exits the program if user presses the Q key
         """
         curses.beep()
         message = str(exception) + " Press any key to continue"
-        self.screen.addstr(self.height, 0, message, self.color_exception)
+        self.message_win.clear()
+        self.message_win.addstr(0, 0, message[: self.x_screen], self.Colors.exception)
+        self.message_win.refresh()
         try:
-            self.screen.nodelay(False)
-            ch = self.screen.getch()
-            if ch != -1 and chr(ch) == 'q':
-                exit()
+            handle = self.handle.copy()
+            del handle[ord("p")]
+            self.get_char(no_delay=False, handle=handle)
         finally:
-            self.screen.addstr(self.height, 0, message, self.color_clear)
+            self.message_win.clear()
+            self.message_win.refresh()
 
-    def complete(self):
-        """Show complete message and wait for keypress. """
-        self.screen.addstr(self.height, 0,
-                           "Program Complete! Press any key to exit",
-                           self.color_complete)
-        self.screen.getch()
+    def message(self, text: str, color: int = None):
+        """ Draw text to user. """
+        if color is None:
+            color = self.Colors.complete
+        self.message_win.addstr(0, 0, text[: self.x_screen], color)
+        if len(text) < self.x_screen:
+            self.message_win.addstr(
+                0, len(text), " " * (self._last_message_len - len(text) - 1), self.Colors.clear
+            )
+        self._last_message_len = len(text)
+        self.message_win.refresh()
 
-    def pause(self):
-        """Wait for keypress. """
-        self.draw_exception("PAUSED")
+    def close_screen(self):
+        """ DO NOT USE WINDOW AFTER THIS! """
+        if hasattr(self, "no_complete") and not self.no_complete:
+            self.no_complete = True
+            self.message("Program Complete! Press any key to exit")
+            self.get_char(no_delay=False)
+        if hasattr(self, "_del_setup") and self._del_setup:
+            # reverse curses terminal settings
+            self._del_setup = False
+            curses.nocbreak()
+            self.screen.keypad(False)
+            curses.echo()
+        if hasattr(self, "_del_screen") and self._del_screen:
+            # restore terminal
+            self._del_setup = False
+            curses.endwin()
 
     def __del__(self):
-        """Show complete message and close screen on program end. """
-        if self.board_fits():
-            self.complete()
-            curses.endwin()
+        """ Show complete text and close screen on program end. """
+        self.close_screen()
+
+
+def screen(win, moved=False, draw=False):
+    """ Safely execute function and redraw.
+
+    Args:
+        win: The window managing screen.
+        moved: Whether Karel has moved (redraws last tile).
+        draw: Draw whole screen (None means no drawing).
+    Returns:
+        Wrapper to safely execute function function.
+    """
+    if win is None:
+        raise RobotError("You have to initialize the window first.")
+
+    def dec_refresh(func):
+        @wraps(func)
+        def wrap_refresh(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+                if draw is True:
+                    win.draw()
+                elif draw is False:
+                    win.redraw(moved)
+                return result
+            except RobotError as ex:
+                if ignore_robot_errors:
+                    return
+                try:
+                    win.draw_exception(ex)
+                except BaseException as ex:
+                    win.no_complete = True
+                    win.close_screen()
+                    raise ex
+            except BaseException as ex:
+                win.no_complete = True
+                win.close_screen()
+                raise ex
+
+        return wrap_refresh
+
+    return dec_refresh

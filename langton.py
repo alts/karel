@@ -3,7 +3,8 @@
 """
 from karel_robot.run import *
 
-set_speed(100)
+# set_speed(None)
+# toggle_status_line(quiet=True)
 
 while True:  # repeat
     if beeper_is_present():  # At a black square
