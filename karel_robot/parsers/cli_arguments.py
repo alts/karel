@@ -26,7 +26,7 @@ You should have received a copy of the GNU General Public License
 along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
-from argparse import ArgumentParser, FileType, Namespace
+from argparse import ArgumentParser, FileType
 
 def get_parser() -> ArgumentParser:
     karel_doc, karel_license = map(lambda x: x.strip(), __doc__.split("LICENSE"))
@@ -63,12 +63,19 @@ def get_parser() -> ArgumentParser:
         help="The direction Karel starts with (one of > v < ^).",
     )
     parser.add_argument(
-        "-p",
+        "-k",
         "--karelpos",
         nargs=2,
         type=int,
-        metavar="X Y",
+        metavar="n",
         help="The position Karel starts on.",
+    )
+    parser.add_argument(
+        "-b",
+        "--beepers",
+        type=int,
+        metavar="B",
+        help="The number of beepers Karel starts with.",
     )
     parser.add_argument(
         "-s",
@@ -81,16 +88,19 @@ def get_parser() -> ArgumentParser:
     parser.add_argument(
         "-q",
         "--quiet",
-        action="store_true",
-        default=False,
-        help="No status line shown. ",
+        action="store_const",
+        const=0,
+        dest="verbose",
+        default=1,
+        help="No status line shown.",
     )
     parser.add_argument(
         "-v",
         "--verbose",
-        action="store_false",
-        dest="quiet",
-        help="Turn on status line (default in interactive).",
+        action="store_const",
+        const=2,
+        default=1,
+        help="Turn on status line.",
     )
     parser.add_argument(
         "--logfile",
@@ -99,16 +109,18 @@ def get_parser() -> ArgumentParser:
         help="Logging file path.",
     )
     parser.add_argument(
-        "--ignore_robot_errors",
-        action="store_true",
-        help="Ignore RobotError in parsing and interactive mode.",
-    )
-    parser.add_argument(
         "-l",
         "--lookahead",
         default=1,
+        type=int,
         metavar="L",
         help="Number of fields visible ahead of Karel.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        metavar="out.km2",
+        help="Output file, save yourself (map must be finite).",
     )
     parser.add_argument(
         "-n", "--new_style_map",
@@ -118,8 +130,8 @@ def get_parser() -> ArgumentParser:
     parser.add_argument(
         "-m",
         "--karelmap",
-        required=False,
-        metavar="YOUR_WORLD.karelmap",
+        type=FileType("r"),
+        metavar="karel_map.km",
         help="Text file with a map of karel world (overwrites -x, -y).",
     )
     return parser

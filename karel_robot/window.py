@@ -30,28 +30,25 @@ along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
-from typing import Callable
+import io
+from typing import Callable, Any
 from functools import wraps
 from time import sleep
 import curses
 from .board import *
 
-RectangleMap = TypeVar('RectangleMap')
-
-ignore_robot_errors: bool = False
-""" Global variable - change only for quick hacks and fun. """
+RectangleMap = TypeVar("RectangleMap")
 
 
 class KeyHandle(NamedTuple):
+    """ Response to user pressing key. """
+
     repeat: bool
-    handle: Callable[[], None]
+    handle: Callable[[], Any]
 
 
 KeysHandler = Dict[int, KeyHandle]
-""" Dictionary for specifying response to user keypress
-    
-See :func:`Window.get_char`.
-"""
+""" Dictionary for specifying response to user keypress. """
 
 
 class Window(BoardView):
@@ -84,6 +81,7 @@ class Window(BoardView):
         y_map: int = None,
         speed: Optional[float] = 2.0,
         lookahead: int = 1,
+        output: str = None,
     ):
         """
         Args:
@@ -122,6 +120,7 @@ class Window(BoardView):
             tiles=tiles,
             lookahead=lookahead,
         )
+        self.output: str = output
         # NOTE: sub-windows compete with parent for same positions, no overlay
         self.board_win = self.screen.subwin(self.y_view + 2, self.x_view + 2, 0, 0)
         """ The sub-window where Karel and his board is drawn. """
@@ -137,7 +136,7 @@ class Window(BoardView):
         }
         """ What to do on user response, in ``key:(retry, function)`` format. """
 
-        self.draw()
+        self.screen_resize()
         self.no_complete = False
 
     def draw(self):
@@ -147,12 +146,12 @@ class Window(BoardView):
             for x in range(self.x_view):
                 self.draw_tile(x, y)
         self.draw_karel_tile().board_win.refresh()
-        return self.user_check()
+        return self.get_char(no_delay=True, handle=self.handle)
 
     def redraw(self, moved=False):
         """ Redraw Karel's tile and the one he `moved` from."""
         self.draw_karel_tile(moved).board_win.refresh()
-        return self.user_check()
+        return self.get_char(no_delay=True, handle=self.handle)
 
     def pause(self):
         """ Wait for keypress. """
@@ -170,6 +169,7 @@ class Window(BoardView):
         curses.cbreak()  # react to keys instantly
         self.screen.keypad(True)  # curses process special keys
         curses.curs_set(False)  # make cursor invisible
+        self.screen.timeout(1)
         self.setup_colors()
 
     def setup_colors(self):
@@ -190,16 +190,9 @@ class Window(BoardView):
             curses.init_pair(i, col_fg, col_bg or curses.COLOR_BLACK)
             setattr(self.Colors, attr, curses.color_pair(i))
 
-    def user_check(self):
-        """ Wait a bit for user ending/pausing program.
-
-        :raises SystemExit: exits the program if user presses the Q key
-        """
-        self.get_char(no_delay=True, handle=self.handle)
-
     def screen_resize(self):
         """ Recalculate the dimensions and draw the board again. """
-        sleep(1/20)
+        sleep(1 / 20)
         self.board_win.clear()
         self.message_win.clear()
         self.y_screen, self.x_screen = self.screen.getmaxyx()
@@ -214,6 +207,10 @@ class Window(BoardView):
         self.draw()
 
     def get_char(self, no_delay=True, restore=False, handle: KeysHandler = None):
+        """
+        TODO
+        """
+
         def handle_char(char):
             handle[char].handle()
             return handle[char].repeat
@@ -239,7 +236,7 @@ class Window(BoardView):
         return self
 
     def get_board_size(self, x_map, y_map):
-        """
+        """ TODO
 
         :param x_map:
         :param y_map:
@@ -250,8 +247,8 @@ class Window(BoardView):
         if y_view < 1 or x_view < 1:
             raise RuntimeError(
                 "Screen too small "
-                f"({self.x_screen, self.y_screen})"
-                f" for board ({self.x_map, self.y_map}) "
+                f"{self.x_screen, self.y_screen}"
+                f" for board {self.x_map, self.y_map} "
                 "Minimum: 3columns 4rows"
             )
         if y_map:
@@ -294,29 +291,54 @@ class Window(BoardView):
         :raises SystemExit: exits the program if user presses the Q key
         """
         curses.beep()
-        message = str(exception) + " Press any key to continue"
-        self.message_win.clear()
-        self.message_win.addstr(0, 0, message[: self.x_screen], self.Colors.exception)
+        self.message(str(exception), self.Colors.exception, pause=True)
+        self.message("")
+
+    def message(self, text: str, color: int = None, pause: bool = False):
+        """ Draw text to user. """
+        if color is None:
+            color = self.Colors.karel
+        if pause:
+            text = text + " Press any key to continue"
+        self.message_win.insertln()
+        if text:
+            self.message_win.addstr(0, 0, text[: self.x_screen], color)
         self.message_win.refresh()
-        try:
+        if pause:
             handle = self.handle.copy()
             del handle[ord("p")]
             self.get_char(no_delay=False, handle=handle)
-        finally:
-            self.message_win.clear()
-            self.message_win.refresh()
 
-    def message(self, text: str, color: int = None):
-        """ Draw text to user. """
-        if color is None:
-            color = self.Colors.complete
-        self.message_win.addstr(0, 0, text[: self.x_screen], color)
-        if len(text) < self.x_screen:
-            self.message_win.addstr(
-                0, len(text), " " * (self._last_message_len - len(text) - 1), self.Colors.clear
+    def save(self):
+        """
+        TODO
+        """
+        if not (self.output and self.x_map and self.y_map):
+            return self.draw_exception(
+                f"Can not save Map(X{self.x_map},Y{self.y_map})"
+                f"to {self.output if self.output else 'non-specified output'}.",
             )
-        self._last_message_len = len(text)
-        self.message_win.refresh()
+
+        def str2(t):
+            return str(t.count) if isinstance(t, Beeper) else str(t)
+
+        try:
+            with io.open(self.output, mode="w") as output:
+                print(
+                    f"KAREL {self.karel.position.x} {self.karel.position.y} "
+                    f"{self.karel.to_dir()} "
+                    f"{'N' if self.karel.beepers is None else self.karel.beepers} ",
+                    file=output,
+                )
+                for y in range(self.y_map):
+                    print(
+                        " ".join(map(str2, (self[x, y] for x in range(self.x_map)))),
+                        file=output,
+                    )
+        except IOError:
+            self.draw_exception(f"Output to file {self.output} failed.")
+        else:
+            self.message(f"Saved the map to {self.output}.")
 
     def close_screen(self):
         """ DO NOT USE WINDOW AFTER THIS! """
@@ -332,7 +354,7 @@ class Window(BoardView):
             curses.echo()
         if hasattr(self, "_del_screen") and self._del_screen:
             # restore terminal
-            self._del_setup = False
+            self._del_screen = False
             curses.endwin()
 
     def __del__(self):
@@ -340,7 +362,7 @@ class Window(BoardView):
         self.close_screen()
 
 
-def screen(win, moved=False, draw=False):
+def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
     """ Safely execute function and redraw.
 
     Args:
@@ -364,8 +386,6 @@ def screen(win, moved=False, draw=False):
                     win.redraw(moved)
                 return result
             except RobotError as ex:
-                if ignore_robot_errors:
-                    return
                 try:
                     win.draw_exception(ex)
                 except BaseException as ex:

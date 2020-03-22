@@ -11,7 +11,7 @@ def main():
     on screen when needed. Note however that the whole screen is redrawn,
     instead of only the last tile.
     """
-    karel, karelmap = parse_map("levels/00_window.karelmap")
+    karel, karelmap = parse_map("worlds/00_window.karelmap")
     w = Window(karel=karel, tiles=karelmap)
     w.pause()
     w.move()

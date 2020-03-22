@@ -41,7 +41,7 @@ class Point(NamedTuple):
     y: int
 
 
-class RobotError(Exception):
+class RobotError(RuntimeError):
     """Wrong execution of Karel program - e.g. hitting a Wall. """
 
 

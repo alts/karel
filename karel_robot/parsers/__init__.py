@@ -6,10 +6,13 @@ Currently there are these parsers:
 """
 from .karel_map import *
 from .cli_arguments import *
+from .karel_interpret import *
 
 __all__ = [
     'parse_map',
     'RectangleMap',
     'get_parser',
-    'Namespace',
+    'Program',
+    'SimpleCommands',
+    'Conditions',
 ]

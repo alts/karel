@@ -27,6 +27,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     entry_points={
-        'console_scripts': ['karel=karel_robot.run.karel_run:interactive']
+        'console_scripts': ['karel=karel_robot.run.karel_run:main']
     }
 )

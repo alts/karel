@@ -27,31 +27,37 @@ along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from curses import endwin, KEY_UP, KEY_LEFT, KEY_RIGHT, KEY_HELP, KEY_RESIZE
-from errno import ENOENT, EINVAL
+from errno import EINVAL, EAGAIN
 from sys import stderr
-
+from argparse import FileType
 from .. import *
 from ..parsers import *
 
+module_path = 'karel_robot.run.karel_run'
 
 ###########################################################
 #                     KAREL START-UP                      #
 ###########################################################
-
 parser = get_parser()
 
-# ignore_robot_errors: bool
-# window: Window
-# karel: Karel
-# karel_map: RectangleMap
-# argv: Namespace
-#
-# def startup_karel():
-#     global karel, karel_map, window, argv, ignore_robot_errors
+if __name__ == "__main__" or __name__ == module_path:
+    parser.add_argument(
+        "-w",
+        "--wait",
+        action="count",
+        default=0,
+        help="Wait for user keypress when stepping through program (-p).",
+    )
+    parser.add_argument(
+        "-p",
+        "--program",
+        type=FileType("r"),
+        metavar="karel_program.ks",
+        help="Text file with a (non Python) recursive Karel program.",
+    )
 
 karel = karel_map = window = None
 argv = parser.parse_args()
-ignore_robot_errors = argv.ignore_robot_errors
 
 if argv.karelpos is not None or argv.kareldir != ">":
     karel = Karel(position=argv.karelpos, facing=argv.kareldir)
@@ -60,9 +66,8 @@ if argv.karelpos is not None or argv.kareldir != ">":
 try:
     if argv.karelmap is not None:
         karel, karel_map = parse_map(
-            path=argv.karelmap,
+            lines=argv.karelmap,
             karel=karel,
-            no_error=argv.ignore_robot_errors,
             new_style_map=argv.new_style_map,
         )
         argv.x_map = len(karel_map[0])
@@ -75,39 +80,39 @@ try:
         y_map=argv.y_map,
         lookahead=argv.lookahead,
         speed=argv.speed,
+        output=argv.output,
     )
-except IOError as e:
-    print("Could not open karel map file:\n" + str(e), file=stderr)
-    exit(ENOENT)
+    if argv.beepers is not None:
+        window.karel.beepers = argv.beepers
 except RobotError as e:
     print("Failed parsing map:\n" + str(e), file=stderr)
     exit(EINVAL)
 except BaseException as e:
     endwin()
     print("There was a problem with curses:\n" + str(e), file=stderr)
-    raise e
+    exit(EAGAIN)
+
+
+def status_line(command: str = "", force=False):
+    """ Unsafe print/log status line. """
+    if argv.verbose == 0 and not argv.logfile and not force:
+        return
+    text = (
+        f"{command.ljust(6) if command else ''}"
+        f"{(*window.karel.position,)} "
+        f"{repr(window.karel_tile)} "
+    )
+    if argv.verbose == 2:
+        text += f"View{(*window.offset,)} "
+    if argv.logfile and (force or argv.wait != 3):
+        print(text, file=argv.logfile)
+    if force or argv.verbose and not (argv.program and argv.wait):
+        window.message(text)
 
 
 ###########################################################
 #                     KAREL FUNCTIONS                     #
 ###########################################################
-
-
-def status_line(command: str = ""):
-    """ Unsafe print/log status line. """
-    if argv.quiet and argv.logfile is None:
-        return
-    text = (
-        f"{(*window.karel.position,)} "
-        f"{repr(window.karel_tile)} "
-        f"View{(*window.offset,)} "
-        f"{command}"
-    )
-    if argv.logfile is not None:
-        print(text, file=argv.logfile)
-    if not argv.quiet:
-        window.message(text)
-
 
 # Movement
 @screen(window, moved=True)
@@ -121,14 +126,14 @@ def move():
 def turn_left():
     """ Karel turns left. """
     window.karel.turn_left()
-    status_line("TURN_LEFT")
+    status_line("LEFT")
 
 
 @screen(window)
 def turn_right():
     """ Karel turns right. """
     window.karel.turn_right()
-    status_line("TURN_RIGHT")
+    status_line("RIGHT")
 
 
 # Beepers
@@ -195,17 +200,18 @@ def set_speed(spd):
     window.speed = spd
 
 
-def toggle_status_line(quiet=None):
-    """ If true then quiet status-line, on None return current. """
-    if quiet is None:
-        return argv.quiet
-    argv.quiet = quiet
-    return argv.quiet
+@screen(window, draw=True)
+def toggle_status_line(status=None):
+    """ Return current status line setting and set to next one or custom. """
+    v = argv.verbose
+    argv.verbose = (v + 1) % 3 if status is None else status
+    status_line(f"TOGGLE{v}")
+    return v
 
 
 def set_karel_beepers(b=0):
     """ Set Karel's beepers, with None working as inf. """
-    window.karel.beepers = b if b is None else max(0, round(b))
+    window.karel.beepers = b if b is None else max(0, int(b))
 
 
 @screen(window, draw=None)
@@ -224,10 +230,9 @@ def screen_resize():
 #             INTERACTIVE CLIENT FOR TESTING              #
 ###########################################################
 
-
 @screen(window, draw=None)
-def message(text="Press Q to quit, P to pause", color=None):
-    window.message(text, color=color or window.Colors.exception)
+def message(text="Press Q to quit, P to pause", color=None, paused=False):
+    window.message(text, color=color, pause=paused)
 
 
 @screen(window, draw=True)
@@ -253,10 +258,19 @@ def set_gold():
     front_set_tile(one_tile(Treasure))
 
 
+@screen(window, draw=None)
+def write_map(filepath: str = None):
+    o = window.output
+    if filepath:
+        window.output = filepath
+    window.save()
+    window.output = o
+
+
 def interactive():
     """ Command Karel on a Board using your keyboard. """
 
-    screen(window)(status_line)("INTERACTIVE")
+    screen(window)(status_line)("INTERACTIVE", force=True)
     outer_speed = window.speed
     set_speed(None)  # Human lives are too short
 
@@ -270,21 +284,27 @@ def interactive():
         window.get_char(
             no_delay=False,
             handle={
-                ord("q"): KeyHandle(repeat=False, handle=lambda: exit()),
-                ord("u"): KeyHandle(repeat=True, handle=put_beeper),
-                ord("i"): KeyHandle(repeat=True, handle=pick_beeper),
-                ord("I"): KeyHandle(repeat=False, handle=_interactive_stop),
-                ord("R"): KeyHandle(repeat=True, handle=screen_resize),
-                ord("W"): KeyHandle(repeat=True, handle=set_wall),
-                ord("T"): KeyHandle(repeat=True, handle=set_gold),
-                ord("D"): KeyHandle(repeat=True, handle=set_tile),
-                ord("V"): KeyHandle(
-                    repeat=True, handle=lambda: toggle_status_line(quiet=False)
-                ),
+                # basic commands
                 KEY_LEFT: KeyHandle(repeat=True, handle=turn_left),
                 KEY_RIGHT: KeyHandle(repeat=True, handle=turn_right),
                 KEY_UP: KeyHandle(repeat=True, handle=move),
+                ord("q"): KeyHandle(repeat=False, handle=lambda: exit()),
+                ord("u"): KeyHandle(repeat=True, handle=put_beeper),
+                ord("i"): KeyHandle(repeat=True, handle=pick_beeper),
+                # save
+                ord("w"): KeyHandle(repeat=True, handle=write_map),
+                # set tiles
+                ord("W"): KeyHandle(repeat=True, handle=set_wall),
+                ord("D"): KeyHandle(repeat=True, handle=set_tile),
+                ord("R"): KeyHandle(repeat=True, handle=screen_resize),
+                ord("T"): KeyHandle(repeat=True, handle=set_gold),
+                # stop interactive only
+                ord("I"): KeyHandle(repeat=False, handle=_interactive_stop),
+                # change verbosity
+                ord("V"): KeyHandle(repeat=True, handle=toggle_status_line),
+                # resize screen
                 KEY_RESIZE: KeyHandle(repeat=True, handle=screen_resize),
+                # user help
                 KEY_HELP: KeyHandle(
                     repeat=True,
                     handle=lambda: message("Use arrows to move, pIck, pUt and Quit."),
@@ -299,5 +319,39 @@ def interactive():
 window.handle[ord("I")] = KeyHandle(repeat=False, handle=interactive)
 
 
-if __name__ == "__main__":
+@screen(window, draw=None)
+def run_program():
+    """
+
+    """
+    def out(m):  # Tee to logfile
+        if argv.wait in [1, 2]:
+            message(m, paused=argv.wait == 1)
+        if argv.logfile:
+            print(m, file=argv.logfile)
+
+    Program(
+        lines=argv.program,
+        commands=SimpleCommands(
+            skip=lambda: None,
+            step=move,
+            left=turn_left,
+            right=turn_right,
+            pick=pick_beeper,
+            put=put_beeper,
+        ),
+        conditions=Conditions(ifwall=front_is_blocked, ifmark=beeper_is_present),
+        confirm=out if argv.wait else None,
+    ).run()
+    argv.program.close()
+    argv.program = None
+
+
+def main():
+    if argv.program:
+        run_program()
     interactive()
+
+
+if __name__ == "__main__":
+    main()

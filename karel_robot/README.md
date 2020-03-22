@@ -8,9 +8,10 @@ the loaded map, robot's position and manage the (cursed) screen.
 If you like OOP you can write programs like this:
 ```python
 import karel_robot as robot
+import karel_robot.parsers as robot_parsers
 
-karel, karelmap = robot.parse_map("levels/00_window.karelmap")
-w = robot.Window(karel=karel, karel_map=karelmap)
+karel, karelmap = robot_parsers.parse_map("worlds/00_window.karelmap")
+w = robot.Window(karel=karel, tiles=karelmap)
 w.pause()
 w.move()
 w.karel.turn_left()

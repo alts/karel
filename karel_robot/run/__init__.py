@@ -23,5 +23,6 @@ __all__ = [
     "pause",
     "interactive",
     "screen",
+    "write_map",
     "toggle_status_line",
 ]

@@ -221,7 +221,7 @@ class BoardView(Board):
         self,
         x_view: int,
         y_view: int,
-        lookahead=1,
+        lookahead: int = 1,
         karel=None,
         x_map=None,
         y_map=None,
@@ -249,7 +249,7 @@ class BoardView(Board):
         """ The y_view of the view on Karel's world. """
         self.advanced = False
         """ Use to check if last call to move advanced the view. """
-        self._lookahead = lookahead
+        self._lookahead: int = max(0, lookahead)
         """ The number of fields visible ahead of Karel """
         self._offset: Point = Point(0, 0)
         """ Top left tile position in the real map coordinates. """
@@ -262,17 +262,18 @@ class BoardView(Board):
     def reset_offset(self):
         """ Recalculate the top-left corner. """
         def offset(pos, pos_karel, abs_max, rel_max):
-            if 0 <= pos_karel < rel_max:
+            if 0 <= pos_karel - pos < rel_max:
                 return pos
-            if abs_max is None or abs_max > rel_max:
-                pos = (pos_karel - rel_max) // 2
-                if abs_max is not None:
-                    pos = max(0, min(abs_max - rel_max, pos))
-            return pos
+            if abs_max is None:  # shift the border only
+                m = min(rel_max - 1, self._lookahead)
+                if pos_karel < m:
+                    return pos_karel - m
+                return pos_karel - rel_max - m
+            return max(0, min(pos_karel, abs_max - rel_max))
 
         self._offset = Point(
-            x=offset(self.offset.x, self.karel_pos.x, self.x_map, self.x_view),
-            y=offset(self.offset.y, self.karel_pos.y, self.y_map, self.y_view),
+            x=offset(self.offset.x, self.karel.position.x, self.x_map, self.x_view),
+            y=offset(self.offset.y, self.karel.position.y, self.y_map, self.y_view),
         )
 
     @property
