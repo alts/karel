@@ -1,0 +1,37 @@
+DEFINE TURN
+    LEFT
+    LEFT
+END
+
+DEFINE STEP2
+    STEP
+    STEP
+END
+
+# ------------------------------------------
+
+DEFINE WHILEPICK
+	TAKE
+    IFMARK WHILEPICK STEP
+    PUT
+END
+
+DEFINE WHILEPICK2
+	TAKE
+	IFMARK WHILEPICK2 STEP2
+    PUT
+END
+
+# ------------------------------------------
+
+DEFINE MAIN
+    STEP
+    TURN
+	WHILEPICK
+    TURN
+    STEP2
+    TURN
+    WHILEPICK2
+END
+
+RUN MAIN
