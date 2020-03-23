@@ -19,10 +19,10 @@ __all__ = [
     "front_is_blocked",
     "front_is_treasure",
     "set_speed",
-    "set_karel_beepers",
+    "set_beepers",
     "pause",
+    "message",
     "interactive",
-    "screen",
     "write_map",
     "toggle_status_line",
 ]

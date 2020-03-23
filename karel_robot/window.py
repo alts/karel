@@ -31,18 +31,15 @@ If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
 import io
-from typing import Callable, Any
 from functools import wraps
+from typing import Callable, Any
 from time import sleep
 import curses
 from .board import *
 
-RectangleMap = TypeVar("RectangleMap")
-
 
 class KeyHandle(NamedTuple):
     """ Response to user pressing key. """
-
     repeat: bool
     handle: Callable[[], Any]
 
@@ -75,13 +72,13 @@ class Window(BoardView):
 
     def __init__(
         self,
-        karel: Karel,
-        tiles: RectangleMap = None,
-        x_map: int = None,
-        y_map: int = None,
+        karel: Optional[Karel] = None,
+        tiles: Optional[MapType] = None,
+        x_map: Optional[int] = None,
+        y_map: Optional[int] = None,
         speed: Optional[float] = 2.0,
         lookahead: int = 1,
-        output: str = None,
+        output: Optional[str] = None,
     ):
         """
         Args:
@@ -97,8 +94,16 @@ class Window(BoardView):
         Description copied from :class:`BoardView`, :class:`Board`
         and :class:`KarelMap`.
         """
-        # First setup whole screen
-        self.speed = max(0.0, speed) or None
+        super().__init__(
+            x_view=-1,  # set later
+            y_view=-1,  # set later
+            x_map=x_map,
+            y_map=y_map,
+            karel=karel,
+            tiles=tiles,
+            lookahead=lookahead,
+        )
+        self.speed: Optional[float] = max(0.0, speed) or None
         """ Roughly the number of ticks per second, ``None`` meaning no wait. """
 
         self.screen = curses.initscr()
@@ -110,18 +115,11 @@ class Window(BoardView):
 
         self.setup_screen()
         self._del_setup = True
-        x_view, y_view = self.get_board_size(x_map=x_map, y_map=y_map)
-        super().__init__(
-            x_view=x_view,
-            y_view=y_view,
-            x_map=x_map,
-            y_map=y_map,
-            karel=karel,
-            tiles=tiles,
-            lookahead=lookahead,
-        )
+
+        # reset the view dimensions, now that we know screen
+        self.x_view, self.y_view = self.get_board_size()
         self.output: str = output
-        # NOTE: sub-windows compete with parent for same positions, no overlay
+        # NOTE: sub-windows share with parent the same positions, no overlay
         self.board_win = self.screen.subwin(self.y_view + 2, self.x_view + 2, 0, 0)
         """ The sub-window where Karel and his board is drawn. """
 
@@ -196,9 +194,7 @@ class Window(BoardView):
         self.board_win.clear()
         self.message_win.clear()
         self.y_screen, self.x_screen = self.screen.getmaxyx()
-        self.x_view, self.y_view = self.get_board_size(
-            x_map=self.x_map, y_map=self.y_map
-        )
+        self.x_view, self.y_view = self.get_board_size()
         self.board_win.resize(self.y_view + 2, self.x_view + 2)
         self.message_win.mvwin(self.y_screen - 1, 0)
         self.message_win.resize(1, self.x_screen)
@@ -235,11 +231,11 @@ class Window(BoardView):
             sleep(1 / self.speed)
         return self
 
-    def get_board_size(self, x_map, y_map):
+    def get_board_size(self):
         """ TODO
 
-        :param x_map:
-        :param y_map:
+        Note: self.*_screen must be set!
+
         :return: the size of view without border
         """
         y_view = self.y_screen - 3  # one line for messages
@@ -251,10 +247,10 @@ class Window(BoardView):
                 f" for board {self.x_map, self.y_map} "
                 "Minimum: 3columns 4rows"
             )
-        if y_map:
-            y_view = min(y_map, y_view)
-        if x_map:
-            x_view = min(x_map, x_view)
+        if self.y_map:
+            y_view = min(self.y_map, y_view)
+        if self.x_map:
+            x_view = min(self.x_map, x_view)
         return x_view, y_view
 
     # DRAWING #######################################################
@@ -358,12 +354,69 @@ class Window(BoardView):
             curses.endwin()
 
     def __del__(self):
-        """ Show complete text and close screen on program end. """
+        """ Show complete text and close screen on program end.
+        """
         self.close_screen()
+
+
+class WindowOpen:
+    """ Window manager to be used like ``open``.
+
+    Usage::
+
+        with WindowOpen(x_map=1, y_map=1) as w:
+           w.move()
+           # ...
+    """
+
+    def __init__(
+        self,
+        karel: Optional[Karel] = None,
+        tiles: Optional[MapType] = None,
+        x_map: Optional[int] = None,
+        y_map: Optional[int] = None,
+        speed: Optional[float] = 2.0,
+        lookahead: int = 1,
+        output: Optional[str] = None,
+    ):
+        """ Description copied from :class:`Window`.
+
+        Args:
+            karel (Karel): The robot or default Karel if None.
+            x_map: The x_view of the map.
+            y_map: The y_view of the map.
+            tiles (Optional[Any]): Mutable map supporting tiles[y_map][x_map],
+                   like list or dict (if dict then indices
+                   not in tiles are considered Tile).
+            speed: The number of ticks per second.
+            lookahead: The number of fields visible ahead of Karel.
+            output: The path to file where map can be saved.
+
+        Returns:
+            A :class:`Window` instance, that when exiting ``with`` block
+            will optionally save the map to ``output`` and close screen.
+
+        """
+        self._w = Window(karel, tiles, x_map, y_map, speed, lookahead, output)
+
+    def __enter__(self):
+        return self._w
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._w.no_complete = exc_type is not None
+        # curses error is BaseException, can't do anything with that
+        if exc_type is None or issubclass(exc_type, Exception):
+            if self._w.output is not None:
+                self._w.save()
+            self._w.draw_exception(exc_val)
+        self._w.close_screen()
+        return False
 
 
 def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
     """ Safely execute function and redraw.
+
+    Use this when the window should stay open upon success.
 
     Args:
         win: The window managing screen.
@@ -372,8 +425,8 @@ def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
     Returns:
         Wrapper to safely execute function function.
     """
-    if win is None:
-        raise RobotError("You have to initialize the window first.")
+    if not isinstance(win, Window):
+        raise RobotError("Supplied window is not a Window object, not initialized?")
 
     def dec_refresh(func):
         @wraps(func)

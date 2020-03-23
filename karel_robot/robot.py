@@ -74,6 +74,7 @@ class Karel:
         """ Coordinates of tile that Karel is standing on. """
         if not isinstance(facing, tuple) and facing not in self.CHARS:
             raise ValueError(f"Karel can not look in the '{facing}' direction")
+        # noinspection PyTypeChecker
         self.facing: Point = self.DIRECTIONS[facing] if facing in self.CHARS else facing
         """ Direction that Karel is facing. """
         self.beepers: int = beepers

@@ -4,15 +4,14 @@ Currently there are these parsers:
 
   - :func:`parse_map`
 """
-from .karel_map import *
-from .cli_arguments import *
-from .karel_interpret import *
+from .karel_map import MapParser
+from .cli_arguments import get_parser
+from .karel_interpret import Program, Commands, Conditions
 
 __all__ = [
-    'parse_map',
-    'RectangleMap',
+    'MapParser',
     'get_parser',
     'Program',
-    'SimpleCommands',
+    'Commands',
     'Conditions',
 ]

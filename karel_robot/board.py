@@ -32,14 +32,12 @@ along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
-from typing import Optional, TypeVar
+from typing import MutableMapping, Tuple
 from .robot import *
 from .tiles import *
 
-T = TypeVar("T")
-
-MapType = Union[list, dict, T]
-""" Type whose instance ``m`` support ``m[y][x]``. """
+MapType = MutableMapping[Tuple[int, int], AnyTile]
+""" Type whose instance ``m`` support ``m[x,y]``. """
 
 
 class KarelMap:
@@ -51,23 +49,36 @@ class KarelMap:
       #....^.
 
     Legend:
+      - multiple :class:`Empty` tiles (``.``)
+
       - one :class:`Beeper` (``1``) is on (0,0)
-      - robot :class:`Karel` (``^``) is on (5,1)
+
+      - robot :class:`Karel` (``^``) is on (5,1) and on plain map
+        his starting tile is :class:`Empty`
+
       - blocking :class:`Wall` (``#``) on (3,0) and on (0,1)
 
-    Note that y_map-coordinate is flipped to ease parsing and printing to screen.
+        - space outside of view is also considered to be :class:`Wall`
+
+    A map is infinite by default and can also be infinite in one dimension only::
+
+        >.1...11..111.1.1.11...11.11.1.11.1.11..1.11.1111.111.1.1
+
+    Note that y-coordinate is flipped to ease parsing and printing to screen.
     """
 
     def __init__(
-        self, x_map: int = None, y_map: int = None, tiles: Optional[MapType] = None
+            self,
+            x_map: Optional[int] = None,
+            y_map: Optional[int] = None,
+            tiles: Optional[MapType] = None,
     ):
         """ Setup by default infinite map of Karel's world.
 
         Args:
             x_map: The width of the map.
             y_map: The height of the map.
-            tiles: Mutable map supporting tiles[y][x], like list or dict
-                   (if dict then indices not in tiles are considered Empty).
+            tiles: Mutable map supporting tiles[x, y].
         """
         self.x_map: Optional[int] = x_map
         """ The x_view of the map. """
@@ -76,46 +87,29 @@ class KarelMap:
         self._tiles: MapType = dict() if tiles is None else tiles
         """ Mutable map supporting ``_tiles[y][x]``. """
 
-    def in_range(self, col: int, row: int):
+    def in_range(self, x: int, y: int):
         """ Check if map is unlimited or includes this coordinate. """
-        return (self.y_map is None or 0 <= row < self.y_map) and (
-            self.x_map is None or 0 <= col < self.x_map
-        )
+        def in_range(i, top):
+            return top is None or 0 <= i < top
+        return in_range(y, self.y_map) and in_range(x, self.x_map)
 
-    def _check_dict_contains(self, x, y, not_dict=False):
-        """ Check if the tiles are a dictionary with coordinate. """
-        if type(self._tiles) is not dict:
-            return not_dict
-        return y in self._tiles and x in self._tiles[y]
-
-    def __getitem__(self, xy):
+    def __getitem__(self, xy: Tuple[int, int]) -> AnyTile:
         """ Access tile at coordinate.
 
         If tiles have border (0, 0 to x_map, y_map) then accessing tiles
         beyond it returns :class:`Wall`. If tiles is a dictionary, then
         coordinates not contained in it returns :class:`Empty`.
         """
-        x, y = xy
-        if not self.in_range(x, y):
+        if not self.in_range(*xy):
             return one_tile(Wall)
-        if not self._check_dict_contains(x, y, not_dict=True):
-            return one_tile(Empty)
-        return self._tiles[y][x]
+        return self._tiles.get(xy, one_tile(Empty))
 
-    def __setitem__(self, xy, tile):
-        """ Set tile at coordinate.
-
-        In dictionary tiles, Empty is used to delete.
-        """
-        x, y = xy
-        if tile is one_tile(Empty) and self._check_dict_contains(x, y):
-            del self._tiles[y][x]
-            if not self._tiles[y]:
-                del self._tiles[y]
-            return
-        if type(self._tiles) is dict and y not in self._tiles:
-            self._tiles[y] = dict()
-        self._tiles[y][x] = tile
+    def __setitem__(self, xy: Tuple[int, int], tile: AnyTile) -> None:
+        """ Set tile at coordinate. """
+        if tile is one_tile(Empty) and xy in self._tiles:
+            del self._tiles[xy]
+        elif self.in_range(*xy):
+            self._tiles[xy] = tile
 
     def __len__(self):
         """ Number of tiles. """
@@ -133,11 +127,11 @@ class Board(KarelMap):
     """
 
     def __init__(
-        self,
-        karel: Karel = None,
-        x_map: int = None,
-        y_map: int = None,
-        tiles: MapType = None,
+            self,
+            karel: Optional[Karel] = None,
+            x_map: Optional[int] = None,
+            y_map: Optional[int] = None,
+            tiles: Optional[MapType] = None,
     ):
         """ Setup by default infinite board with Karel the robot.
 
@@ -153,23 +147,35 @@ class Board(KarelMap):
         super().__init__(x_map, y_map, tiles)
         self.karel = karel or Karel()
         """ The robot living on the board. """
+        if self[self.karel.position].blocking:
+            raise RobotError("Karel can not move!")
 
     @property
-    def karel_tile(self):
+    def karel_tile(self) -> AnyTile:
         """ The :class:`Tile` that :class:`Karel` is standing on. """
         return self[self.karel.position]
 
     @karel_tile.setter
-    def karel_tile(self, tile):
+    def karel_tile(self, tile: AnyTile):
         self[self.karel.position] = tile
 
-    def karel_facing(self) -> Tile:
+    @property
+    def karel_facing(self) -> AnyTile:
         """ The :class:`Tile` that :class:`Karel` is facing.
         Iff beyond board, then :class:`Wall`.
         """
         x = self.karel.position.x + self.karel.facing.x
         y = self.karel.position.y + self.karel.facing.y
         return self[x, y]
+
+    @karel_facing.setter
+    def karel_facing(self, tile: AnyTile):
+        """ The :class:`Tile` that :class:`Karel` is facing.
+        If beyond board, then ignored.
+        """
+        x = self.karel.position.x + self.karel.facing.x
+        y = self.karel.position.y + self.karel.facing.y
+        self[x, y] = tile
 
     def move(self):
         """Karel tries to move in the direction he is facing. """
@@ -180,15 +186,15 @@ class Board(KarelMap):
 
     def pick_beeper(self) -> Board:
         """ :class:`Karel` tries to pick up a :class:`Beeper`. """
-        tile = self.karel_tile
-        if isinstance(tile, Beeper):
-            if tile.count > 1:
+        if isinstance(self.karel_tile, Beeper):
+            # noinspection PyUnresolvedReferences
+            if self.karel_tile.count > 1:
                 self.karel_tile.count -= 1
             else:
                 self.karel_tile = one_tile(Empty)
             self.karel.pick_beeper()
         else:
-            raise RobotError(f"Can't pick Beeper from {type(tile).__name__}")
+            raise RobotError(f"Can't pick Beeper from {repr(self.karel_tile)}")
         return self
 
     def put_beeper(self) -> Board:
@@ -202,11 +208,11 @@ class Board(KarelMap):
 
     def front_is_blocked(self) -> bool:
         """ True iff :class:`Karel` can't move forward. """
-        return self.karel_facing().blocking
+        return self.karel_facing.blocking
 
     def front_is_treasure(self) -> bool:
         """ True iff :class:`Karel` stands in front of a :class:`Treasure`. """
-        return isinstance(self.karel_facing(), Treasure)
+        return isinstance(self.karel_facing, Treasure)
 
     def beeper_is_present(self) -> bool:
         """ True iff :class:`Karel` stands on a :class:`Beeper`. """
@@ -218,14 +224,14 @@ class BoardView(Board):
     """
 
     def __init__(
-        self,
-        x_view: int,
-        y_view: int,
-        lookahead: int = 1,
-        karel=None,
-        x_map=None,
-        y_map=None,
-        tiles=None,
+            self,
+            x_view: int,
+            y_view: int,
+            lookahead: int = 1,
+            karel=None,
+            x_map=None,
+            y_map=None,
+            tiles=None,
     ):
         """ Setup by default infinite board viewed through limited
         window, that shifts with :class:`Karel`.
@@ -251,19 +257,17 @@ class BoardView(Board):
         """ Use to check if last call to move advanced the view. """
         self._lookahead: int = max(0, lookahead)
         """ The number of fields visible ahead of Karel """
-        self._offset: Point = Point(0, 0)
+        self.offset: Point = Point(0, 0)
         """ Top left tile position in the real map coordinates. """
         self.reset_offset()
 
-    @property
-    def offset(self):
-        return self._offset
-
     def reset_offset(self):
         """ Recalculate the top-left corner. """
-        def offset(pos, pos_karel, abs_max, rel_max):
-            if 0 <= pos_karel - pos < rel_max:
-                return pos
+
+        def offset(pos_karel, abs_max, rel_max):
+            """ Calculate offset for one dimension. """
+            # if 0 <= pos_karel - pos < rel_max:
+            #    return pos
             if abs_max is None:  # shift the border only
                 m = min(rel_max - 1, self._lookahead)
                 if pos_karel < m:
@@ -271,16 +275,16 @@ class BoardView(Board):
                 return pos_karel - rel_max - m
             return max(0, min(pos_karel, abs_max - rel_max))
 
-        self._offset = Point(
-            x=offset(self.offset.x, self.karel.position.x, self.x_map, self.x_view),
-            y=offset(self.offset.y, self.karel.position.y, self.y_map, self.y_view),
+        self.offset = Point(
+            x=offset(self.karel.position.x, self.x_map, self.x_view),
+            y=offset(self.karel.position.y, self.y_map, self.y_view),
         )
 
     @property
     def karel_pos(self):
         """ Karel's position in the shifted coordinates. """
         xk, yk = self.karel.position
-        x, y = self._offset
+        x, y = self.offset
         return Point(x=xk - x, y=yk - y)
 
     def border_visible(self, direction: Optional[KAREL_DIR] = None):
@@ -288,13 +292,13 @@ class BoardView(Board):
         if direction is None:
             direction = self.karel.to_dir()
         if direction == "<":
-            return self.x_map is not None and self._offset.x == 0
+            return self.x_map is not None and self.offset.x == 0
         if direction == ">":
-            return self.x_map == self._offset.x + self.x_view
+            return self.x_map == self.offset.x + self.x_view
         if direction == "^":
-            return self.y_map is not None and self._offset.y == 0
+            return self.y_map is not None and self.offset.y == 0
         if direction == "v":
-            return self.y_map == self._offset.y + self.y_view
+            return self.y_map == self.offset.y + self.y_view
 
     def karel_lookahead(self):
         """ Check if there if karel can advance the view ahead. """
@@ -313,9 +317,9 @@ class BoardView(Board):
         """ Move view in along with :class:`Karel`. """
         self.advanced = not self.border_visible() and self.karel_lookahead()
         if self.advanced:
-            self._offset = Point(
-                x=self._offset.x + self.karel.facing.x,
-                y=self._offset.y + self.karel.facing.y,
+            self.offset = Point(
+                x=self.offset.x + self.karel.facing.x,
+                y=self.offset.y + self.karel.facing.y,
             )
         super(BoardView, self).move()
         return self
@@ -326,7 +330,7 @@ class BoardView(Board):
         This also works for **one tile** beyond boundary.
         """
         if -1 <= x <= self.x_view and -1 <= y <= self.y_view:
-            return Point(x=x + self._offset.x, y=y + self._offset.y)
+            return Point(x=x + self.offset.x, y=y + self.offset.y)
         raise RuntimeError("BoardView accessed beyond the boundary. ")
 
     def get_view(self, x, y):
