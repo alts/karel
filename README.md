@@ -7,7 +7,7 @@
 >
 > *Stephen Altamirano (`alts/karel`)*
 
-![Karel searching for Treasure.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_00.gif)
+![Karel searching for Treasure.](images/window.gif)
 
 ## Installation
 
@@ -19,18 +19,25 @@ pip3 install karel_robot
 ## Write simple Karel programs
 
 Coding in Python is **super fast and easy**!
-Save a text file `YOUR_PROGRAM.py` in this folder, use import and start coding!
+Save a text file `example.py` in this folder, use import and start coding!
 
 ```python
 from karel_robot.run import *
-# Simple program
-move()
+# you can call imported functions
 turn_left()
-move()
+
+# or use Python, like loops ('while') or logical 'not'
+while not front_is_blocked():
+    move()
+
 ```
 
 > For a true unix executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559),
 > then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
+
+
+
+If you are learning Python and want to check the implementation, this [[ADD LINK]] is the last simple version. The new package allows you to resize screen and many more. Generally, if you break the karel program, it should not leave your terminal screen broken in retaliation. More advanced or courageous programmers are welcome to look at the karel_robot folder and read about the details.
 
 
 
@@ -60,7 +67,9 @@ These are the functions you can use to command Karel after importing from `karel
 | `set_karel_beepers(None)`| Set Karel's beepers, with `None` as inf.       |
 | `set_speed(100)`      | How fast Karel moves, 0 to 100                    |
 | `pause()`             | Pause execution, press any key to continue        |
-| `exit()`              | End execution                                     |
+| `message(text, pause)`    | Show a text message to user.                      |
+| `save()` | Save the map in file specified by `--output`. |
+| `exit()` | End execution |
 
 
 Note that the map is loaded and screen started in the moment of import:
@@ -73,7 +82,7 @@ If you only need raw objects and methods see the directory [karel_robot](./karel
 
 ## Karel world
 
-Karel maps are also simple text files and look like this one:
+There are many maps in [`world`](.world) directory. Karel maps are simple text files and look like this one:
 
     1..#...
     #....^.
@@ -81,6 +90,21 @@ Karel maps are also simple text files and look like this one:
 Karel is represented by the arrow (`^`) looking up on the empty tile (`.`).\
 There are two walls (`#`) and one beeper in the upper right corner (`1`).
 There is no treasure (`$`).
+
+This does not allow us to use more then 9 beepers and place Karel on beeper or other non-empty tile.
+
+#### New Karel's map format
+
+A new map format has file extension `.km2` but it is still plain text file -- you can change it to `.txt`:
+
+```
+KAREL 2 1 > N
+#  1  .  #  #  .  . 21
+#  #  9  .  #  .  #  #
+6  .  .  .  .  .  .  #
+```
+
+The above map places Karel right on the 9 beepers. Note that there are 21 beepers in the upper right corner in one tile. The mysterious `N` in Karel's header sets the number of beepers he starts with to unlimited, which is the most fun.
 
 > Planing to write maps? Check out the vim highlighting! :)
 
@@ -91,43 +115,17 @@ There is no treasure (`$`).
 Open the terminal and write this command:
 
 ```bash
-python3 YOUR_PROGRAM.py YOUR_MAP.karelmap
+python3 YOUR_PROGRAM.py  # -m YOUR_MAP.karelmap or other options
 ```
 
 Press <kbd>Q</kbd> to quit or <kbd>P</kbd> to pause program.
 Program pauses when Karel tries to make an illegal move.
 
-
-
-## Try out your map with *interactive*
-
-Use the command:
-```bash
-karel YOUR_MAP.karelmap
-```
-
-You can now use your keyboard to control Karel.
-
-|     Key    |  Function       |
-|------------|-----------------|
-|<kbd>↑</kbd>| `move()`        |
-|<kbd>←</kbd>| `turn_left()`   |
-|<kbd>→</kbd>| `turn_right()`  |
-|<kbd>I</kbd>| `pick_beeper()` |
-|<kbd>U</kbd>| `put_beeper()`  |
-|<kbd>Q</kbd>| `stop()`        |
-
-## Examples
-
-You can try these examples or study them for great knowledge.
-You can always quit their execution with <kbd>Q</kbd>.
-
-### Example treasure
-
+<details><summary><h3>Example treasure</h3></summary>
 Run the program `treasure.py` (also below) with worlds `00` - `03_window`.
 Karel will walk to the wall and then search for a treasure in the walls.
 
-![Karel finds the treasure.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_00.gif)&emsp;![Karel cycles.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_01.gif)&emsp;![Karel hits the wall.](https://raw.githubusercontent.com/xsebek/karel/master/images/introduction_03.gif)
+![Karel finds the treasure.](images/00_window.gif)&emsp;![Karel cycles.](images/01_window.gif)&emsp;![Karel goes around.](images/02_window.gif)&emsp;![Karel hits the wall.](images/03_window.gif)
 
 The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/doi/abs/10.1145/2492686).
 
@@ -149,16 +147,19 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
       turn_right()
   ```
 </details>
+</details>
 
 
-### Langton's ant
+<details><summary><h3>Langton's ant</h3></summary>
 
-The program `langton.py` (also below) makes Karel a [Langton's ant](https://en.wikipedia.org/wiki/Langton%27s_ant),
-using a single beeper to mark a tile as "Black" and Karel can pick it up to make it "White".
+Here is a short compressed animation of Karel playing Langton's ant.<sup>[[wiki]](https://en.wikipedia.org/wiki/Langton%27s_ant)</sup>
 
-![Karel programmed as Langton's ant](https://raw.githubusercontent.com/xsebek/karel/master/images/langtons_ant.gif)
+<img src="images/langton_optimized.gif" alt="langton_optimized" width="40%"/>
 
-The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. Try with the world `04_140x50`.
+The program `X_langton.py` (also below)  uses a single beeper to mark a tile as "Black" and Karel can pick it up to make it "White". The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. The options used in recoding are:
+```bash
+programs/X_langton.py -x 70 -y 50 --karel 35 25 --direction ^ --speed 0 --output langton.km2
+```
 
 <details>
   <summary>Langton's ant Python code</summary>
@@ -178,6 +179,54 @@ The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
           move()                  # move forward one unit
   ```
 </details>
+</details>
+
+
+
+
+## Try out your map with *interactive*
+
+Run the `karel` script with any of the options:
+```bash
+karel --help                       # 0. prints the actual usage
+karel                              # 1. opens in infinite map, fills the whole screen
+karel -m "world/00_window.km"      # 2. opens the simple text file map in world directory
+karel --ix -m "world/E3_tiny.km2"  # 3. one line infinite "tape" with content of file
+```
+
+You can now use your keyboard to control Karel.
+
+|     Key    |  Function       |
+|------------|-----------------|
+|<kbd>↑</kbd>| `move()`        |
+|<kbd>←</kbd>| `turn_left()`   |
+|<kbd>→</kbd>| `turn_right()`  |
+|<kbd>I</kbd>| `pick_beeper()` |
+|<kbd>U</kbd>| `put_beeper()`  |
+|<kbd>Q</kbd>| `stop()`        |
+
+> There is also <kbd>W</kbd> for saving to file (specified by `--output`) and couple of keys for cheting/testing!
+
+
+
+
+## Recursive Karel
+
+You can try your wits in creating iterative programs with only **if** statements, procedure definition and recursion! It is pretty mind bending so lets look at an example:
+
+```markdown
+DEFINE MAIN
+    IFWALL PUT MOVE
+    IFWALL SKIP MAIN
+END
+RUN MAIN
+```
+
+After the program is parsed and run, the `MAIN` function will call itself again until it reaches a wall. When that happens, Karel will put down a beeper and the execution stops. Here is a more complex recursive program searching through a maze in search for a tile with two beepers:
+
+![program_treasure](images/program_treasure.gif)
+
+
 
 
 
@@ -186,10 +235,14 @@ The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
 The original author is Stephen Altamirano (@alts).
 Recently this has been updated by @Tetragramm and @xsebek.
 
+The package on PyPI is maintained by @xsebek.
+
+If you want to contribute, check out the karel_robot folder README.
+
 
 ## LICENSE
 
-This project is released under GNU GPLv3 license in hopes that
+This project is released under GNU GPLv3 (or later) license in hopes that
 it will be useful. You are encouraged to share this *freely* and can
 even sell it provided everyone will still be able to read and modify
-the source code, just like you are :wink:
+the source code, just like you are ​a​n​d​ ​k​e​e​p​s​ ​t​h​e ​l​i​ce​n​s​e​.​ :wink: 

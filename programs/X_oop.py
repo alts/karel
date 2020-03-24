@@ -1,24 +1,32 @@
-"""Example code with more OOP approach.
-"""
-from karel_robot import Window
-from karel_robot.parsers import parse_map
+""" Example code with more OOP approach. """
+from karel_robot import WindowOpen
+from karel_robot.parsers import MapParser
+
+
+def example(window):
+    window.karel.turn_left()
+
+    while not window.front_is_blocked():
+        window.move()
 
 
 def main():
-    """This is how you could use the classes to do the same as `example.py`.
+    """ This is how you could use the classes to do the same as `example.py`.
 
-    This approach gives more power to the user, namely it allows to draw
-    on screen when needed. Note however that the whole screen is redrawn,
-    instead of only the last tile.
+    This approach gives more power to the user. Notice the board is redrawn
+    only after Karel reaches the wall.
+
+    Also it might just be safer then leaving it to Python garbage collector ;)
     """
-    karel, karelmap = parse_map("worlds/00_window.karelmap")
-    w = Window(karel=karel, tiles=karelmap)
-    w.pause()
-    w.move()
-    w.karel.turn_left()
-    w.move()
-    w.draw()
+    with open("../world/M3_div.km2") as m:
+        m = MapParser(lines=m, new_style_map=True)
+
+    with WindowOpen(
+        karel=m.karel, tiles=m.karel_map, x_map=m.width, y_map=m.height
+    ) as w:
+        example(w)
+        w.draw()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

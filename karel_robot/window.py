@@ -156,6 +156,9 @@ class Window(BoardView):
         self.draw_exception("PAUSED")
 
     def move(self):
+        """ Move Karel inside view and if he were to leave the screen,
+            move it too.
+        """
         if super(Window, self).move().advanced:
             self.draw()
 
@@ -203,11 +206,10 @@ class Window(BoardView):
         self.draw()
 
     def get_char(self, no_delay=True, restore=False, handle: KeysHandler = None):
-        """
-        TODO
-        """
+        # TODO
 
         def handle_char(char):
+            """ Run handling function and return if input should be read again. """
             handle[char].handle()
             return handle[char].repeat
 
@@ -232,7 +234,8 @@ class Window(BoardView):
         return self
 
     def get_board_size(self):
-        """ TODO
+        # TODO
+        """
 
         Note: self.*_screen must be set!
 
@@ -306,9 +309,7 @@ class Window(BoardView):
             self.get_char(no_delay=False, handle=handle)
 
     def save(self):
-        """
-        TODO
-        """
+        # TODO
         if not (self.output and self.x_map and self.y_map):
             return self.draw_exception(
                 f"Can not save Map(X{self.x_map},Y{self.y_map})"
@@ -316,6 +317,7 @@ class Window(BoardView):
             )
 
         def str2(t):
+            """ Beeper(1) ~~> 1 and Empty ~~~> . """
             return str(t.count) if isinstance(t, Beeper) else str(t)
 
         try:
@@ -429,8 +431,10 @@ def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
         raise RobotError("Supplied window is not a Window object, not initialized?")
 
     def dec_refresh(func):
+        """ Inner decorator that only takes function and safely executes it. """
         @wraps(func)
         def wrap_refresh(*args, **kwargs):
+            """ The actual wrapper for function working with Window. """
             try:
                 result = func(*args, **kwargs)
                 if draw is True:
