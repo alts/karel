@@ -1,3 +1,22 @@
+""" Parse Karel map file, see the MapParser for more details.
+
+==============================================================================
+                                   LICENSE
+==============================================================================
+
+The karel_robot package is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+The karel_robot package is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along with
+the karel_robot package. If not, see `<https://www.gnu.org/licenses/>`_.
+"""
 from typing import Tuple, Dict, Iterable, Optional, Callable, Type
 from .. import *
 from .. import AnyTile, Tile

@@ -143,7 +143,7 @@ from ..parsers import *
 
 _parser = get_parser()
 
-if __name__ in ["__main__", "karel_robot.run.karel_run"]:
+if __name__ in ["__main__", "karel_robot.run.main"]:
     _parser.usage += " [-p program.ks]"
     _parser.add_argument(
         "-W",
@@ -352,6 +352,7 @@ def pause():
 
 @screen(window, draw=None)
 def screen_resize():
+    """ Window readjusts self to include Karel on board. """
     window.screen_resize()
     status_line("RESIZE")
 
@@ -363,11 +364,13 @@ def screen_resize():
 
 @screen(window, draw=None)
 def message(text="Press Q to quit, P to pause", paused=False, *, color=None):
+    """ Show message to user in the message window (bottom line). """
     window.message(text, color=color, pause=paused)
 
 
 @screen(window, draw=None)
-def write_map(filepath: str = None):
+def write_map(filepath: Optional[str] = None):
+    """ Save map to file, if map is not infinite and user can write to file. """
     o = window.output
     if filepath:
         window.output = filepath
@@ -392,8 +395,10 @@ def front_set_tile(tile):
 
 
 def karel_tile_beepers(n: int):
+    """ Set the tile Karel is standing on to include exactly `n` beepers. """
     @screen(window)
     def _karel_tile_beepers():
+        """ Set the tile Karel stands on to exactly `n` beepers. """
         if n < 1:
             window.karel_tile = one_tile(Empty)
         else:
@@ -461,7 +466,7 @@ window.handle[ord("I")] = KeyHandle(repeat=False, handle=interactive)
 
 @screen(window, draw=None)
 def run_program():
-    """
+    """ Parse recursive Karel program and run it.
     """
     status_line("PARSING PROGRAM", force=True)
 
@@ -495,6 +500,7 @@ def run_program():
 
 
 def main():
+    """ The function to be executed as a script. """
     if _argv.program:
         run_program()
     interactive()

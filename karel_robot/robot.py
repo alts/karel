@@ -37,6 +37,7 @@ KAREL_DIR = str  # Literal[">", "<", "^", "v"]
 
 
 class Point(NamedTuple):
+    """ Better way to access 2-vector of ints, otherwise same as tuple. """
     x: int
     y: int
 
