@@ -37,7 +37,10 @@ while not front_is_blocked():
 
 
 
-If you are learning Python and want to check the implementation, this [[ADD LINK]] is the last simple version. The new package allows you to resize screen and many more. Generally, if you break the karel program, it should not leave your terminal screen broken in retaliation. More advanced or courageous programmers are welcome to look at the karel_robot folder and read about the details.
+If you are learning Python and want to check the implementation, this [[ADD LINK]] is the last simple version.
+The new package allows you to resize screen and many more.
+Generally, if you break the karel program, it should not leave your terminal screen broken in retaliation.
+More advanced or courageous programmers are welcome to look at the karel_robot folder and read about the details.
 
 
 
@@ -93,9 +96,9 @@ There is no treasure (`$`).
 
 This does not allow us to use more then 9 beepers and place Karel on beeper or other non-empty tile.
 
-#### New Karel's map format
+#### New Karel map format
 
-A new map format has file extension `.km2` but it is still plain text file -- you can change it to `.txt`:
+A new map format has file extension `.km2` but it is still plain text file − you can change it to `.txt`:
 
 ```
 KAREL 2 1 > N
@@ -104,9 +107,13 @@ KAREL 2 1 > N
 6  .  .  .  .  .  .  #
 ```
 
-The above map places Karel right on the 9 beepers. Note that there are 21 beepers in the upper right corner in one tile. The mysterious `N` in Karel's header sets the number of beepers he starts with to unlimited, which is the most fun.
+The above map places Karel right on the 9 beepers.
+Note that there are 21 beepers in the upper right corner in one tile.
+The mysterious `N` in Karel's header sets the number of beepers he starts with to unlimited, which is the most fun.
 
-> Planing to write maps? Check out the vim highlighting! :)
+![vim](images/vim.png)
+
+> Do you want to write or edit maps? Check out the vim highlighting!
 
 
 
@@ -124,6 +131,7 @@ Program pauses when Karel tries to make an illegal move.
 <details><summary><h3>Example treasure</h3></summary>
 Run the program `treasure.py` (also below) with worlds `00` - `03_window`.
 Karel will walk to the wall and then search for a treasure in the walls.
+
 
 ![Karel finds the treasure.](images/00_window.gif)&emsp;![Karel cycles.](images/01_window.gif)&emsp;![Karel goes around.](images/02_window.gif)&emsp;![Karel hits the wall.](images/03_window.gif)
 
@@ -152,11 +160,15 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
 
 <details><summary><h3>Langton's ant</h3></summary>
 
-Here is a short compressed animation of Karel playing Langton's ant.<sup>[[wiki]](https://en.wikipedia.org/wiki/Langton%27s_ant)</sup>
+Here is a short compressed animation of Karel playing
+Langton's ant.<sup>[[wiki]](https://en.wikipedia.org/wiki/Langton%27s_ant)</sup>
 
 <img src="images/langton_optimized.gif" alt="langton_optimized" width="40%"/>
 
-The program `X_langton.py` (also below)  uses a single beeper to mark a tile as "Black" and Karel can pick it up to make it "White". The ant moves seemingly randomly, but makes a nice picture in about 11000 steps. The options used in recoding are:
+The program `X_langton.py` (also below)  uses a single beeper to mark a tile as "Black"
+and Karel can pick it up to make it "White".
+The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
+The options used in the recording are:
 ```bash
 programs/X_langton.py -x 70 -y 50 --karel 35 25 --direction ^ --speed 0 --output langton.km2
 ```
@@ -205,14 +217,15 @@ You can now use your keyboard to control Karel.
 |<kbd>U</kbd>| `put_beeper()`  |
 |<kbd>Q</kbd>| `stop()`        |
 
-> There is also <kbd>W</kbd> for saving to file (specified by `--output`) and couple of keys for cheting/testing!
+> There is also <kbd>W</kbd> for saving to file (specified by `--output`) and couple of keys for ~~cheating~~ testing!
 
 
 
 
 ## Recursive Karel
 
-You can try your wits in creating iterative programs with only **if** statements, procedure definition and recursion! It is pretty mind bending so lets look at an example:
+You can try your wits in creating iterative programs with only **if** statements, procedure definition and recursion!
+It is pretty mind bending so lets look at an example:
 
 ```markdown
 DEFINE MAIN
@@ -222,7 +235,10 @@ END
 RUN MAIN
 ```
 
-After the program is parsed and run, the `MAIN` function will call itself again until it reaches a wall. When that happens, Karel will put down a beeper and the execution stops. Here is a more complex recursive program searching through a maze in search for a tile with two beepers:
+After the program is parsed and run, the `MAIN` function will call itself again until it reaches a wall.
+When that happens, Karel will put down a beeper and the execution stops.
+
+Here is a more complex recursive program searching through a maze in search for a tile with two beepers:
 
 ![program_treasure](images/program_treasure.gif)
 
@@ -245,4 +261,4 @@ If you want to contribute, check out the karel_robot folder README.
 This project is released under GNU GPLv3 (or later) license in hopes that
 it will be useful. You are encouraged to share this *freely* and can
 even sell it provided everyone will still be able to read and modify
-the source code, just like you are ​a​n​d​ ​k​e​e​p​s​ ​t​h​e ​l​i​ce​n​s​e​.​ :wink: 
+the source code, just like you are and keeps the license. :wink:

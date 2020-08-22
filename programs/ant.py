@@ -3,7 +3,7 @@
 """
 from karel_robot.run import *
 
-# set_speed(None)
+set_speed(None)
 # toggle_status_line(quiet=True)
 
 while True:  # repeat

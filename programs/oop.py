@@ -18,7 +18,7 @@ def main():
 
     Also it might just be safer then leaving it to Python garbage collector ;)
     """
-    with open("../world/M3_div.km2") as m:
+    with open("../world/1_window.km") as m:
         m = MapParser(lines=m, new_style_map=True)
 
     with WindowOpen(

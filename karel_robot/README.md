@@ -7,16 +7,30 @@ the loaded map, robot's position and manage the (cursed) screen.
 
 If you like OOP you can write programs like this:
 ```python
-import karel_robot as robot
-import karel_robot.parsers as robot_parsers
+from karel_robot import WindowOpen
+from karel_robot.parsers import MapParser
 
-karel, karelmap = robot_parsers.parse_map("worlds/00_window.karelmap")
-w = robot.Window(karel=karel, tiles=karelmap)
-w.pause()
-w.move()
-w.karel.turn_left()
-w.move()
-w.draw()
+
+def example(window):
+    window.karel.turn_left()
+
+    while not window.front_is_blocked():
+        window.move()
+
+
+def main():
+    with open("../world/1_window.km") as m:
+        m = MapParser(lines=m, new_style_map=False)
+
+    with WindowOpen(
+        karel=m.karel, tiles=m.karel_map, x_map=m.width, y_map=m.height
+    ) as w:
+        example(w)
+        w.draw()
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ## Run
@@ -29,9 +43,9 @@ make the above program much simpler:
 ```python
 from karel_robot.run import *
 
-move()
 turn_left()
-move()
+while not front_is_blocked():
+    move()
 ```
 
 Running this code with `python3 example_run.py levels/00_window.karelmap`
@@ -51,5 +65,5 @@ pip3 install .  # use the path to this repo in place of . if different
 
 Or run it directly:
 ```bash
-python3 karel_robot/run/karel_run.py levels/00_window.karelmap
+python3 karel_robot/run/karel_run.py levels/1_window.karelmap
 ```
