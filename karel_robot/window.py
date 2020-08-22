@@ -425,7 +425,7 @@ def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
         moved: Whether Karel has moved (redraws last tile).
         draw: Draw whole screen (None means no drawing).
     Returns:
-        Wrapper to safely execute function function.
+        Wrapper to safely execute function func.
     """
     if not isinstance(win, Window):
         raise RobotError("Supplied window is not a Window object, not initialized?")

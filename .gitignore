@@ -3,6 +3,8 @@ __pycache__
 build/
 dist/
 karel_robot.egg-info/
+.mypy_cache/
+venv/
 
 # Editors
 .vscode
@@ -13,3 +15,4 @@ karel_robot.egg-info/
 
 # don't add files like tmp.txt
 tmp*
+
