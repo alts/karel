@@ -89,7 +89,7 @@ class Program:
         conditions: T_Conditions,
         confirm: Optional[UserConfirm] = None,
     ):
-        self.main = None
+        self.main: Optional[Procedure] = None
         """ Name of the procedure that will be first run. """
 
         # Try to avoid Python stack overflow
@@ -114,7 +114,7 @@ class Program:
         self._proc_to_check: Dict[Procedure, List[int]] = {}
         """ Temporarily store procedure names for later check. """
 
-        self._current: Optional[List[Procedure]] = None
+        self._current: Optional[List[Statement]] = None
         """ The currently defined procedure (temporary). """
 
         for lineno, line in enumerate(lines, start=1):
@@ -194,6 +194,7 @@ class Program:
           - ``('IFWALL','PASS','MOVE')`` starting with :class:`Conditions`.
           - ``'END'`` of the defined procedure.
         """
+        assert self._current is not None
         if command[0] == "end":
             if not self._current:
                 raise RuntimeError(

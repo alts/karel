@@ -118,7 +118,7 @@ class Window(BoardView):
 
         # reset the view dimensions, now that we know screen
         self.x_view, self.y_view = self.get_board_size()
-        self.output: str = output
+        self.output: Optional[str] = output
         # NOTE: sub-windows share with parent the same positions, no overlay
         self.board_win = self.screen.subwin(self.y_view + 2, self.x_view + 2, 0, 0)
         """ The sub-window where Karel and his board is drawn. """

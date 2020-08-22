@@ -36,7 +36,7 @@ from typing import MutableMapping, Tuple
 from .robot import *
 from .tiles import *
 
-MapType = MutableMapping[Tuple[int, int], AnyTile]
+MapType = MutableMapping[Tuple[int, int], Tile]
 """ Type whose instance ``m`` support ``m[x,y]``. """
 
 
@@ -93,7 +93,7 @@ class KarelMap:
             return top is None or 0 <= i < top
         return in_range(y, self.y_map) and in_range(x, self.x_map)
 
-    def __getitem__(self, xy: Tuple[int, int]) -> AnyTile:
+    def __getitem__(self, xy: Tuple[int, int]) -> Tile:
         """ Access tile at coordinate.
 
         If tiles have border (0, 0 to x_map, y_map) then accessing tiles
@@ -101,12 +101,12 @@ class KarelMap:
         coordinates not contained in it returns :class:`Empty`.
         """
         if not self.in_range(*xy):
-            return one_tile(Wall)
-        return self._tiles.get(xy, one_tile(Empty))
+            return Wall()
+        return self._tiles.get(xy, Empty())
 
-    def __setitem__(self, xy: Tuple[int, int], tile: AnyTile) -> None:
+    def __setitem__(self, xy: Tuple[int, int], tile: Tile) -> None:
         """ Set tile at coordinate. """
-        if tile is one_tile(Empty) and xy in self._tiles:
+        if isinstance(tile, Empty) and xy in self._tiles:
             del self._tiles[xy]
         elif self.in_range(*xy):
             self._tiles[xy] = tile
@@ -151,16 +151,16 @@ class Board(KarelMap):
             raise RobotError("Karel can not move!")
 
     @property
-    def karel_tile(self) -> AnyTile:
+    def karel_tile(self) -> Tile:
         """ The :class:`Tile` that :class:`Karel` is standing on. """
         return self[self.karel.position]
 
     @karel_tile.setter
-    def karel_tile(self, tile: AnyTile):
+    def karel_tile(self, tile: Tile):
         self[self.karel.position] = tile
 
     @property
-    def karel_facing(self) -> AnyTile:
+    def karel_facing(self) -> Tile:
         """ The :class:`Tile` that :class:`Karel` is facing.
         Iff beyond board, then :class:`Wall`.
         """
@@ -169,7 +169,7 @@ class Board(KarelMap):
         return self[x, y]
 
     @karel_facing.setter
-    def karel_facing(self, tile: AnyTile):
+    def karel_facing(self, tile: Tile):
         """ The :class:`Tile` that :class:`Karel` is facing.
         If beyond board, then ignored.
         """
@@ -186,12 +186,12 @@ class Board(KarelMap):
 
     def pick_beeper(self) -> Board:
         """ :class:`Karel` tries to pick up a :class:`Beeper`. """
-        if isinstance(self.karel_tile, Beeper):
-            # noinspection PyUnresolvedReferences
-            if self.karel_tile.count > 1:
-                self.karel_tile.count -= 1
+        tile = self.karel_tile
+        if isinstance(tile, Beeper):
+            if tile.count > 1:
+                tile.count -= 1
             else:
-                self.karel_tile = one_tile(Empty)
+                self.karel_tile = Empty()
             self.karel.pick_beeper()
         else:
             raise RobotError(f"Can't pick Beeper from {repr(self.karel_tile)}")
@@ -200,8 +200,9 @@ class Board(KarelMap):
     def put_beeper(self) -> Board:
         """ :class:`Karel` puts down a :class:`Beeper` (if he has any). """
         self.karel.put_beeper()
-        if isinstance(self.karel_tile, Beeper):
-            self.karel_tile.count += 1
+        tile = self.karel_tile
+        if isinstance(tile, Beeper):
+            tile.count += 1
         else:
             self.karel_tile = Beeper()
         return self

@@ -11,16 +11,16 @@ END
 # ------------------------------------------
 
 # bring marks from next field
-DEFINE WHILEPICK
+DEFINE WHILE_PICK
 	TAKE
-	IFMARK WHILEPICK STEP
+	IFMARK WHILE_PICK STEP
     PUT
 END
 
 # bring marks from the field 2 steps away
-DEFINE WHILEPICK2
+DEFINE WHILE_PICK2
 	TAKE
-	IFMARK WHILEPICK2 STEP2
+	IFMARK WHILE_PICK2 STEP2
     PUT
 END
 
@@ -38,10 +38,10 @@ DEFINE PLUS1TO2FIELDS
 END
 
 # copy marks
-DEFINE WHILEPICKCP
+DEFINE WHILE_PICK_CP
     # >x y
 	TAKE
-    IFMARK WHILEPICKCP STEP
+    IFMARK WHILE_PICK_CP STEP
 	PLUS1TO2FIELDS
     # x >x+y
 END
@@ -54,10 +54,10 @@ END
 
 DEFINE MINUS2M1
     TAKE
-    IFMARK TAKE ONEBEHIND
+    IFMARK TAKE ONE_BEHIND
 END
 
-DEFINE ONEBEHIND
+DEFINE ONE_BEHIND
     # x >y z
     TURN
     STEP
@@ -87,12 +87,12 @@ DEFINE MAIN
     # >0 x y
     STEP2
     TURN
-    WHILEPICK
+    WHILE_PICK
     TURN
     # >0 (x+y) 0
     DIV2
     # 1 >((x+y)/2) 0
-    WHILEPICKCP
+    WHILE_PICK_CP
     # 1 >((x+y)/2) ((x+y)/2)
 END
 

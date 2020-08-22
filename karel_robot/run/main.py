@@ -12,6 +12,45 @@ Write your Karel program in Python by importing karel_robot.run and using the
 simple functions like move() and turn_left(). Alternatively write recursive
 (non Python) programs and run them with '--program example.ks'. See Examples.
 
+
+==============================================================================
+                                   Examples
+==============================================================================
+
+Following examples assume you are running karel from terminal and have Python
+version at least 3.6 installed.
+
+- **Command Karel using keyboard in a infinite empty world**::
+
+    karel
+
+- **Write a simple Python script commanding Karel**::
+
+    from karel_robot.run import *
+    # moves to the wall, places one beeper and stops
+    while not front_is_blocked():
+        move()
+    put_beeper()
+
+  Then run Karel in a 10x10 world like this::
+
+    python3 programs/walk.py -x 10 -y 10
+
+- **Write a recursive Karel program as a challenge**::
+
+    DEFINE MAIN
+        IFWALL PUT MOVE
+        IFWALL SKIP MAIN
+    END
+    RUN MAIN
+
+  Run Karel in a one line 200 squares long world::
+
+    karel --program programs/easy/1_walk.ks -y 1 -x 200
+
+  > For details see the karel_robot/parsers/interpret.py file.
+
+
 ------------------------------------------------------------------------------
                                      Note
 ------------------------------------------------------------------------------
@@ -72,44 +111,6 @@ For details see the section of the file marked 'KAREL FUNCTIONS'.
 
 
 ==============================================================================
-                                   Examples
-==============================================================================
-
-Following examples assume you are running karel from terminal and have Python
-version at least 3.6 installed.
-
-- **Command Karel using keyboard in a infinite empty world**::
-
-    karel
-
-- **Write a simple Python script commanding the Karel**::
-
-    from karel_robot.run import *
-    # moves to the wall, places one beeper and stops
-    while not front_is_blocked():
-        move()
-    put_beeper()
-
-  Then run Karel in a 10x10 world like this::
-
-    python3 programs/walk.py -x 10 -y 10
-
-- **Write a recursive Karel program as a challenge**::
-
-    DEFINE MAIN
-        IFWALL PUT MOVE
-        IFWALL SKIP MAIN
-    END
-    RUN MAIN
-
-  Run Karel in a one line longer world::
-
-    karel --program programs/walk.sk -y 1 -x 200
-
-  For details see the karel_robot/parsers/interpret.py file.
-
-
-==============================================================================
                                    LICENSE
 ==============================================================================
 
@@ -141,11 +142,12 @@ from ..parsers import *
 #                               KAREL START-UP                               #
 ##############################################################################
 
-_parser = get_parser()
+parser = get_parser()
 
 if __name__ in ["__main__", "karel_robot.run.main"]:
-    _parser.usage += " [-p program.ks]"
-    _parser.add_argument(
+    if parser.usage:
+        parser.usage += " [-p program.ks]"
+    parser.add_argument(
         "-W",
         action="count",
         dest="wait",
@@ -154,7 +156,7 @@ if __name__ in ["__main__", "karel_robot.run.main"]:
         "On two or more (-WW) shows the info, but do not wait for confirmation. "
         "On three or more (-WWW) writes only program message to --logfile. ",
     )
-    _parser.add_argument(
+    parser.add_argument(
         "-p",
         "--program",
         type=FileType("r"),
@@ -164,40 +166,37 @@ if __name__ in ["__main__", "karel_robot.run.main"]:
 
 _karel: Optional[Karel] = None
 _karel_map: Optional[MapType] = None
-window: Optional[Window] = None
-_argv = _parser.parse_args()
 
-if _argv.karelpos or _argv.kareldir:
-    _karel = Karel(position=_argv.karelpos, facing=_argv.kareldir or ">")
+window_opt: Optional[Window] = None
+argv = parser.parse_args()
+
+if argv.karelpos or argv.kareldir:
+    _karel = Karel(position=argv.karelpos, facing=argv.kareldir or ">")
 
 # Board is loaded and starts the curses window
 try:
-    if _argv.karelmap is not None:
-        _new_style = os.path.splitext(_argv.karelmap.name)[1] == ".km2"
-        _m = MapParser(
-            lines=_argv.karelmap,
-            karel=_karel,
-            new_style_map=_argv.new_style_map or _new_style,
-        )
+    if argv.karelmap is not None:
+        _new_style = os.path.splitext(argv.karelmap.name)[1] == ".km2"
+        _m = MapParser(lines=argv.karelmap, karel=_karel, new_style_map=argv.new_style_map or _new_style)
         _karel, _karel_map = _m.karel, _m.karel_map
-        _argv.karelmap.close()
+        argv.karelmap.close()
         # overwrite default '-x' if not set or if '--ix' was set
-        if not _argv.x_map or _argv.infinite_x:
-            _argv.x_map = None if _argv.infinite_x else _m.width
-        if not _argv.y_map or _argv.infinite_y:
-            _argv.y_map = None if _argv.infinite_y else _m.height
+        if not argv.x_map or argv.infinite_x:
+            argv.x_map = None if argv.infinite_x else _m.width
+        if not argv.y_map or argv.infinite_y:
+            argv.y_map = None if argv.infinite_y else _m.height
     # Curse the window
-    window = Window(
+    window_opt = Window(
         karel=_karel,
         tiles=_karel_map,
-        x_map=_argv.x_map,
-        y_map=_argv.y_map,
-        lookahead=_argv.lookahead,
-        speed=_argv.speed,
-        output=_argv.output,
+        x_map=argv.x_map,
+        y_map=argv.y_map,
+        lookahead=argv.lookahead,
+        speed=argv.speed,
+        output=argv.output,
     )
-    if _argv.beepers is not None:
-        window.karel.beepers = _argv.beepers
+    if argv.beepers is not None:
+        window_opt.karel.beepers = argv.beepers
 except RobotError as e:
     print("Failed setting up the map:\n" + str(e), file=stderr)
     exit(EINVAL)
@@ -211,32 +210,46 @@ except BaseException as e:
     exit(EIO)
 
 
+if window_opt is None:
+    print("Failed setting up the curses window", file=stderr)
+    exit(EINVAL)  # Never happens, right?
+
+window: Window = window_opt
+
+
 ##############################################################################
 #                                STATUS LINE                                 #
 ##############################################################################
 
+
 def status_line(command: str = "", force=False):
     """ Unsafe print/log status line. """
-    if _argv.verbose == 0 and not _argv.logfile and not force:
+    if argv.verbose == 0 and not argv.logfile and not force:
         return
+
+    karel = window.karel
+    if not karel:
+        print("Karel left the screen!", file=stderr)  # never happens, right?
+        exit(EINVAL)
+
     text = (
         f"{command.ljust(5) if command else ''} "
-        f"{(*window.karel.position,)} "
+        f"{(*karel.position,)} "
         f"{repr(window.karel_tile)} "
     )
-    if _argv.verbose == 2:
+    if argv.verbose == 2:
         text += f"View{(*window.offset,)} "
-    if _argv.logfile and (force or _argv.wait != 3):
-        print(text, file=_argv.logfile)
-    if force or _argv.verbose and not (_argv.program and _argv.wait):
+    if argv.logfile and (force or argv.wait != 3):
+        print(text, file=argv.logfile)
+    if force or argv.verbose and not (argv.program and argv.wait):
         window.message(text)
 
 
 @screen(window, draw=True)
 def toggle_status_line(status=None):
     """ Return current status line setting and set to next one or custom. """
-    v = _argv.verbose
-    _argv.verbose = (v + 1) % 3 if status is None else status
+    v = argv.verbose
+    argv.verbose = (v + 1) % 3 if status is None else status
     status_line(f"TOGGLE{v}")
     return v
 
@@ -285,7 +298,7 @@ def put_beeper():
 @screen(window, draw=None)
 def beeper_is_present():
     """ True iff Karel stands on a beeper. """
-    status_line("IFMARK")
+    status_line("IF_MARK")
     return window.beeper_is_present()
 
 
@@ -293,14 +306,14 @@ def beeper_is_present():
 @screen(window, draw=None)
 def front_is_blocked():
     """ True iff Karel can't move forward. """
-    status_line("IFWALL")
+    status_line("IF_WALL")
     return window.front_is_blocked()
 
 
 @screen(window, draw=None)
 def front_is_treasure():
     """ True iff Karel stands in front of a Treasure. """
-    status_line("IFGOLD")
+    status_line("IF_GOLD")
     return window.front_is_treasure()
 
 
@@ -308,28 +321,28 @@ def front_is_treasure():
 @screen(window, draw=None)
 def facing_north():
     """ True iff Karel is facing north (^). """
-    status_line("IS_NORTH")
+    status_line("IF_NORTH")
     return window.karel.facing_north()
 
 
 @screen(window, draw=None)
 def facing_south():
     """ True iff Karel is facing south (v). """
-    status_line("IS_SOUTH")
+    status_line("IF_SOUTH")
     return window.karel.facing_south()
 
 
 @screen(window, draw=None)
 def facing_east():
     """ True iff Karel is facing east (>). """
-    status_line("IS_EAST")
+    status_line("IF_EAST")
     return window.karel.facing_east()
 
 
 @screen(window, draw=None)
 def facing_west():
     """ True iff Karel is facing west (<). """
-    status_line("IS_WEST")
+    status_line("IF_WEST")
     return window.karel.facing_west()
 
 
@@ -341,7 +354,7 @@ def set_speed(spd):
 
 def set_beepers(b=0):
     """ Set Karel's beepers, with None working as inf. """
-    window.karel.beepers = b if b is None else max(0, int(b))
+    window.karel.beepers = None if b is None else max(0, int(b))
 
 
 @screen(window, draw=None)
@@ -400,7 +413,7 @@ def karel_tile_beepers(n: int):
     def _karel_tile_beepers():
         """ Set the tile Karel stands on to exactly `n` beepers. """
         if n < 1:
-            window.karel_tile = one_tile(Empty)
+            window.karel_tile = Empty()
         else:
             window.karel_tile = Beeper(count=n)
         status_line(f"SET{n}")
@@ -435,9 +448,9 @@ def interactive():
         # save
         ord("w"): KeyHandle(repeat=True, handle=write_map),
         # set tiles
-        ord("#"): KeyHandle(repeat=True, handle=front_set_tile(one_tile(Wall))),
-        ord("."): KeyHandle(repeat=True, handle=front_set_tile(one_tile(Empty))),
-        ord("$"): KeyHandle(repeat=True, handle=front_set_tile(one_tile(Treasure))),
+        ord("#"): KeyHandle(repeat=True, handle=front_set_tile(Wall())),
+        ord("."): KeyHandle(repeat=True, handle=front_set_tile(Empty())),
+        ord("$"): KeyHandle(repeat=True, handle=front_set_tile(Treasure())),
         # stop interactive only
         ord("I"): KeyHandle(repeat=False, handle=_interactive_stop),
         # change verbosity
@@ -472,13 +485,13 @@ def run_program():
 
     def out(m):
         """ Tee to logfile if set. """
-        if _argv.wait:
-            message(m, paused=_argv.wait == 1)
-        if _argv.logfile:
-            print(m, file=_argv.logfile)
+        if argv.wait:
+            message(m, paused=argv.wait == 1)
+        if argv.logfile:
+            print(m, file=argv.logfile)
 
     p = Program(
-        lines=_argv.program,
+        lines=argv.program,
         commands=Commands(
             skip=lambda: None,
             move=move,
@@ -491,17 +504,17 @@ def run_program():
             ifwall=front_is_blocked,
             ifmark=beeper_is_present,
         ),
-        confirm=out if _argv.wait else None,
+        confirm=out if argv.wait else None,
     )
     status_line("LOADED PROGRAM", force=True)
     p.run()
-    _argv.program.close()
-    _argv.program = None
+    argv.program.close()
+    argv.program = None
 
 
 def main():
     """ The function to be executed as a script. """
-    if _argv.program:
+    if argv.program:
         run_program()
     interactive()
 

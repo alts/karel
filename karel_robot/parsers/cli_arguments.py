@@ -25,6 +25,7 @@ the karel_robot package. If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from argparse import ArgumentParser, FileType
 
+
 def get_parser() -> ArgumentParser:
     """ The command line argument parser used by karel executable
     and scripts importing karel_robot.run.

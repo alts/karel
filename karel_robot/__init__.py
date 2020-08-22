@@ -40,8 +40,6 @@ from .window import *
 __all__ = [
     'Karel',
     'Tile',
-    'one_tile',
-    'AnyTile',
     'Empty',
     'Wall',
     'Beeper',

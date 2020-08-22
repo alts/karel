@@ -30,7 +30,7 @@ along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
-from typing import NamedTuple, Dict, Union, List
+from typing import NamedTuple, Dict, Union, List, Optional
 
 # wait for 3.8
 KAREL_DIR = str  # Literal[">", "<", "^", "v"]
@@ -73,12 +73,16 @@ class Karel:
     ):
         self.position: Point = Point(0, 0) if position is None else Point(*position)
         """ Coordinates of tile that Karel is standing on. """
-        if not isinstance(facing, tuple) and facing not in self.CHARS:
+
+        if isinstance(facing, Point):
+            self.facing: Point = facing
+            """ Direction that Karel is facing. """
+        elif facing in self.CHARS:
+            self.facing = self.DIRECTIONS[facing]
+        else:
             raise ValueError(f"Karel can not look in the '{facing}' direction")
-        # noinspection PyTypeChecker
-        self.facing: Point = self.DIRECTIONS[facing] if facing in self.CHARS else facing
-        """ Direction that Karel is facing. """
-        self.beepers: int = beepers
+
+        self.beepers: Optional[int] = beepers
         """ Number of beeper Karel can put down (if None then infinite). """
 
     def __repr__(self):
@@ -100,25 +104,25 @@ class Karel:
         return self
 
     def turn_left(self) -> Karel:
-        """Karel turns 90° anti-clockwise. """
+        """ Karel turns 90° anti-clockwise. """
         self.facing = Point(self.facing.y, -self.facing.x)
         return self
 
     def turn_right(self) -> Karel:
-        """Karel turns 90° clockwise. """
+        """ Karel turns 90° clockwise. """
         self.facing = Point(-self.facing.y, self.facing.x)
         return self
 
     def holding_beepers(self) -> bool:
-        """True if Karel has some or unlimited beepers. """
+        """ True if Karel has some or unlimited beepers. """
         return self.beepers is None or self.beepers > 0
 
-    def facing(self, direction: KAREL_DIR) -> bool:
-        """True if Karel is facing in the north direction. """
+    def facing_dir(self, direction: KAREL_DIR) -> bool:
+        """ True if Karel is facing in the north direction. """
         return self.to_dir() == direction
 
     def pick_beeper(self) -> Karel:
-        """Increase beeper count if it is limited. """
+        """ Increase beeper count if it is limited. """
         if self.beepers is not None:
             self.beepers += 1
         return self

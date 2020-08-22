@@ -31,8 +31,8 @@ You should have received a copy of the GNU General Public License
 along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, TypeVar, Type
 
 
 @dataclass
@@ -53,9 +53,6 @@ class Tile:
         WARNING: overwrite if ``len(chars) > 1``.
         """
         return self.chars
-
-
-AnyTile = TypeVar("AnyTile", bound=Tile)
 
 
 @dataclass
@@ -107,46 +104,3 @@ class Beeper(Tile):
 
     def __repr__(self):
         return f"Beeper({self.count})"
-
-
-def _one_tile(cls: Type[Tile], set_share: Optional[bool] = None) -> Optional[AnyTile]:
-    """ One **shared default instance** of class, same between calls.
-
-    Args:
-        cls: Tile class to get one shared instance.
-        set_share: if False, then calls with this class return None.
-
-    Returns:
-        The instance of the class cls or None if set_share was False.
-    """
-    if type(set_share) is bool:
-        cls._share_one_tile = set_share
-    if hasattr(cls, "_share_one_tile") and not cls._share_one_tile:
-        return
-    if set_share or not hasattr(cls, "_the_one"):
-        cls._the_one = cls()
-    return cls._the_one
-
-
-def one_tile_set(cls: Type[Tile], set_share: bool = True) -> None:
-    """ Set if this Tile class should have a one shared instance. """
-    _one_tile(cls, set_share)
-
-
-def one_tile(cls: Type[Tile]) -> AnyTile:
-    """ Get one shared instance of class.
-
-    Raises:
-        ValueError: if class was set to not share one Tile.
-    """
-    i = _one_tile(cls)
-    if i is None:
-        raise ValueError(f"Class {cls.__name__} was set not to share one tile.")
-    return i
-
-
-one_tile_set(Tile, set_share=False)
-one_tile_set(Empty)
-one_tile_set(Wall)
-one_tile_set(Treasure)
-one_tile_set(Beeper, set_share=False)
