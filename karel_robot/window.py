@@ -40,6 +40,7 @@ from .board import *
 
 class KeyHandle(NamedTuple):
     """ Response to user pressing key. """
+
     repeat: bool
     handle: Callable[[], Any]
 
@@ -56,8 +57,7 @@ class Window(BoardView):
 
     # all colors are set in `start_screen`
     class Colors:
-        """ Curses colors for printing in terminal.
-        """
+        """ Curses colors for printing in terminal. """
 
         wall: int
         empty: int
@@ -67,8 +67,6 @@ class Window(BoardView):
         exception: int
         complete: int
         clear: int
-
-    #################################################################
 
     def __init__(
         self,
@@ -104,49 +102,59 @@ class Window(BoardView):
             lookahead=lookahead,
         )
         self.speed: Optional[float] = max(0.0, speed) or None
-        """ Roughly the number of ticks per second, ``None`` meaning no wait. """
+        """ The number of ticks per second, ``None`` meaning no wait. """
 
         self.screen = curses.initscr()
         """ Cursed screen representing the whole terminal window. """
-        self._del_screen = True
+        self._del_screen = True  # Mark for cleanup: curses screen initialized
+        # ---------------------- #
 
         self.y_screen, self.x_screen = self.screen.getmaxyx()
         """ Dimension of the whole terminal screen. """
 
         self.setup_screen()
-        self._del_setup = True
+        self._del_setup = True  # Mark for cleanup: curses screen setup
+        # --------------------- #
 
         # reset the view dimensions, now that we know screen
-        self.x_view, self.y_view = self.get_board_size()
+        x, y = self.get_board_size()
+        self.x_view = x
+        """ The width of the board view (without border) """
+        self.y_view = y
+        """ The height of the board view (without border) """
+
         self.output: Optional[str] = output
         # NOTE: sub-windows share with parent the same positions, no overlay
         self.board_win = self.screen.subwin(self.y_view + 2, self.x_view + 2, 0, 0)
-        """ The sub-window where Karel and his board is drawn. """
+        """ The sub-window where Karel and his board is drawn """
 
         self.message_win = curses.newwin(1, self.x_screen, self.y_screen - 1, 0)
-        """ The sub-window where messages to user are printed. """
+        """ The sub-window where messages to user are printed """
         self._last_message_len = 0
 
         self.handle: KeysHandler = {
             ord("q"): KeyHandle(repeat=False, handle=lambda: exit()),
             ord("p"): KeyHandle(repeat=False, handle=self.pause),
-            curses.KEY_RESIZE: KeyHandle(repeat=True, handle=self.screen_resize),
+            curses.KEY_RESIZE: KeyHandle(repeat=True, handle=self.resize),
         }
-        """ What to do on user response, in ``key:(retry, function)`` format. """
+        """ What to do on user response, in ``key:(retry, function)`` format """
 
-        self.screen_resize()
+        self.resize()  # why again?
         self.no_complete = False
+        """ Flag for complete message being shown """
 
-    def draw(self):
+    def draw(self) -> int:
         """ Draw the whole board. """
         self.board_win.border()
         for y in range(self.y_view):
             for x in range(self.x_view):
                 self.draw_tile(x, y)
-        self.draw_karel_tile().board_win.refresh()
+
+        self.draw_karel_tile()
+        self.board_win.refresh()
         return self.get_char(no_delay=True, handle=self.handle)
 
-    def redraw(self, moved=False):
+    def redraw(self, moved=False) -> int:
         """ Redraw Karel's tile and the one he `moved` from."""
         self.draw_karel_tile(moved).board_win.refresh()
         return self.get_char(no_delay=True, handle=self.handle)
@@ -191,9 +199,10 @@ class Window(BoardView):
             curses.init_pair(i, col_fg, col_bg or curses.COLOR_BLACK)
             setattr(self.Colors, attr, curses.color_pair(i))
 
-    def screen_resize(self):
-        """ Recalculate the dimensions and draw the board again. """
-        sleep(1 / 20)
+    def resize(self):
+        """ Recalculate the screen dimensions and draw the board again. """
+        # TODO: check why ERR on positive coordinates
+        sleep(1 / 5)
         self.board_win.clear()
         self.message_win.clear()
         self.y_screen, self.x_screen = self.screen.getmaxyx()
@@ -205,13 +214,16 @@ class Window(BoardView):
         self.reset_offset()
         self.draw()
 
-    def get_char(self, no_delay=True, restore=False, handle: KeysHandler = None):
-        # TODO
+    def get_char(self, no_delay=True, restore=False, handle: KeysHandler = None) -> int:
+        """ Wait for and then return user input - optionally handle it first. """
 
-        def handle_char(char):
-            """ Run handling function and return if input should be read again. """
-            handle[char].handle()
-            return handle[char].repeat
+        def handle_char(char) -> bool:
+            """ Run handling function and return whether input should be read again. """
+            ch_to_handle = char if char in handle else curses.KEY_HELP
+            if ch_to_handle not in handle:
+                return False
+            handle[ch_to_handle].handle()
+            return handle[ch_to_handle].repeat
 
         while True:
             self.screen.nodelay(no_delay)
@@ -219,12 +231,8 @@ class Window(BoardView):
                 self.wait()
             ch = self.screen.getch()
             self.screen.nodelay(restore)
-            if handle and ch in handle:
-                if handle_char(ch):
-                    continue
-            elif handle and curses.KEY_HELP in handle:
-                if handle_char(curses.KEY_HELP):
-                    continue
+            if handle and handle_char(ch):
+                continue
             return ch
 
     def wait(self):
@@ -242,18 +250,18 @@ class Window(BoardView):
         :return: the size of view without border
         """
         y_view = self.y_screen - 3  # one line for messages
-        x_view = self.x_screen - 2  # two for border
+        x_view = self.x_screen - 2  # and two for border
         if y_view < 1 or x_view < 1:
             raise RuntimeError(
                 "Screen too small "
-                f"{self.x_screen, self.y_screen}"
-                f" for board {self.x_map, self.y_map} "
+                f"{self.x_screen, self.y_screen} "
+                f"for board {self.karel_map.x, self.karel_map.y} "
                 "Minimum: 3columns 4rows"
             )
-        if self.y_map:
-            y_view = min(self.y_map, y_view)
-        if self.x_map:
-            x_view = min(self.x_map, x_view)
+        if self.karel_map.y:
+            y_view = min(self.karel_map.y, y_view)
+        if self.karel_map.x:
+            x_view = min(self.karel_map.x, x_view)
         return x_view, y_view
 
     # DRAWING #######################################################
@@ -272,12 +280,23 @@ class Window(BoardView):
 
     def draw_karel_tile(self, moved=False):
         """ Draw the tile Karel is standing on and the one he ``moved`` from. """
-        self.board_win.addch(
-            self.karel_pos.y + 1,  # 1 border line
-            self.karel_pos.x + 1,
-            self.karel.to_dir(),
-            self.Colors.karel_beeper if self.beeper_is_present() else self.Colors.karel,
+        color = (
+            self.Colors.karel_beeper if self.beeper_is_present() else self.Colors.karel
         )
+        try:
+            self.board_win.addch(
+                self.karel_pos.y + 1,  # 1 border line
+                self.karel_pos.x + 1,
+                self.karel.to_dir(),
+                color,
+            )
+        except curses.error:
+            raise RobotError(
+                f"Could not draw Karel's tile {self.karel_pos}, "
+                f"direction {self.karel.to_dir()} and color {color} "
+                f"in view {self.x_view, self.y_view}"
+            )
+
         if moved:
             x, y = self.karel_pos
             vx, vy = self.karel.facing
@@ -310,29 +329,23 @@ class Window(BoardView):
 
     def save(self):
         # TODO
-        if not (self.output and self.x_map and self.y_map):
-            return self.draw_exception(
-                f"Can not save Map(X{self.x_map},Y{self.y_map})"
-                f"to {self.output if self.output else 'non-specified output'}.",
-            )
-
-        def str2(t):
-            """ Beeper(1) ~~> 1 and Empty ~~~> . """
-            return str(t.count) if isinstance(t, Beeper) else str(t)
-
+        if not self.output:
+            return self.draw_exception(f"Can not save Map without specified output.",)
         try:
             with io.open(self.output, mode="w") as output:
-                print(
-                    f"KAREL {self.karel.position.x} {self.karel.position.y} "
+                c_max = self.karel_map.max_coordinate(default=self.karel.position)
+                c_min = self.karel_map.min_coordinate(default=self.karel.position)
+                print(  # Header
+                    f"KAREL "
+                    f"{self.karel.position.x - c_min.x} "
+                    f"{self.karel.position.y - c_min.y} "
                     f"{self.karel.to_dir()} "
                     f"{'N' if self.karel.beepers is None else self.karel.beepers} ",
                     file=output,
                 )
-                for y in range(self.y_map):
-                    print(
-                        " ".join(map(str2, (self[x, y] for x in range(self.x_map)))),
-                        file=output,
-                    )
+                for y in range(c_min.y, c_max.y + 1):  # Tiles
+                    line = (self.karel_map[x, y] for x in range(c_min.x, c_max.x + 1))
+                    print(" ".join(map(str, line)), file=output)
         except IOError:
             self.draw_exception(f"Output to file {self.output} failed.")
         else:
@@ -432,6 +445,7 @@ def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
 
     def dec_refresh(func):
         """ Inner decorator that only takes function and safely executes it. """
+
         @wraps(func)
         def wrap_refresh(*args, **kwargs):
             """ The actual wrapper for function working with Window. """

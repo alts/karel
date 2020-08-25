@@ -1,5 +1,6 @@
-"""
-TODO ask IV003 for permission
+""" Parse and run recursive Karel programs.
+
+
 """
 from dataclasses import dataclass, fields
 from typing import Callable, List, Dict, Union, NamedTuple, Iterable, Optional, TypeVar

@@ -5,7 +5,8 @@ See the README in linked GitHub repository for more details.
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = fh.read()
+    long_description = fh.read()\
+        .replace("images", "https://github.com/xsebek/karel/blob/master/images")
 
 setuptools.setup(
     name="karel_robot",

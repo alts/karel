@@ -37,10 +37,9 @@ while not front_is_blocked():
 
 
 
-If you are learning Python and want to check the implementation, this [[ADD LINK]] is the last simple version.
-The new package allows you to resize screen and many more.
-Generally, if you break the karel program, it should not leave your terminal screen broken in retaliation.
-More advanced or courageous programmers are welcome to look at the karel_robot folder and read about the details.
+If you break the Karel program, it should not leave your terminal screen broken in retaliation, otherwise please
+file an [Issue](https://github.com/xsebek/karel/issues/new/choose).
+More advanced or courageous programmers are welcome to look at the `karel_robot` folder and read about the details.
 
 
 
@@ -108,7 +107,7 @@ KAREL 2 1 > N
 ```
 
 The above map places Karel right on the 9 beepers.
-Note that there are 21 beepers in the upper right corner in one tile.
+Note that there are 21 beepers in the upper right corner in one tile, which the original format does not support.
 The mysterious `N` in Karel's header sets the number of beepers he starts with to unlimited, which is the most fun.
 
 ![vim](images/vim.png)
@@ -122,7 +121,7 @@ The mysterious `N` in Karel's header sets the number of beepers he starts with t
 Open the terminal and write this command:
 
 ```bash
-python3 YOUR_PROGRAM.py  # -m YOUR_MAP.karelmap or other options
+python3 YOUR_PROGRAM.py  # -m YOUR_MAP.km or other options
 ```
 
 Press <kbd>Q</kbd> to quit or <kbd>P</kbd> to pause program.
@@ -202,8 +201,8 @@ Run the `karel` script with any of the options:
 ```bash
 karel --help                       # 0. prints the actual usage
 karel                              # 1. opens in infinite map, fills the whole screen
-karel -m "world/00_window.km"      # 2. opens the simple text file map in world directory
-karel --ix -m "world/E3_tiny.km2"  # 3. one line infinite "tape" with content of file
+karel -m "world/1_window.km"      # 2. opens the simple text file map in world directory
+karel --ix -m "world/easy/tiny.km2"  # 3. simillar to 2., but forces the
 ```
 
 You can now use your keyboard to control Karel.

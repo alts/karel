@@ -39,7 +39,7 @@ class MapParser:
     """ Take lines/map file and make a robot and a map.
 
     Attributes:
-        karel: the robot
+        karel: the robot to override map
         karel_map: mapping of (x,y) to tiles, leaving out Empty
         height: of the map
         width: of the map
@@ -55,12 +55,13 @@ class MapParser:
         Args:
             lines: of the map, e.g. open file or ['>.', '.1']
             karel: use this karel instead (better warning)
-            new_style_map: space separated tiles and specified Karel and dimensions.
+            new_style_map: if tiles are separated by spaces and has header
         Raises:
             RobotError: on incorrect map or if Karel is not present
         """
-        self.karel: Karel = karel if karel else Karel()
-        """ The robot, basically position * direction """
+        self.karel: Optional[Karel] = karel  # docstring below
+        self._karel_override = karel is None
+
         self.karel_map: Dict[Tuple[int, int], Tile] = dict()
         """ Mapping of (x,y) to tiles, leaving out Empty """
         self.width: Optional[int] = None
@@ -71,31 +72,31 @@ class MapParser:
         self._empty = Empty()
         self._wall = Wall()
         self._lines = iter(lines)
-        self._new_style = new_style_map
-        self._lineno = lambda y: y + self._new_style + 1
-        if self._new_style:
+        self._lineno = lambda y: y + new_style_map + 1
+        if new_style_map:
             try:
                 header = next(self._lines)
             except StopIteration:
                 raise RobotError("line 0: Map empty!")
             if karel is None:
                 self.karel = self.parse_new_map_header(header)
-        self._parse()
+                """ The robot, basically (position * direction) """
+        self._parse(new_style_map)
 
-    def _parse(self):
+    def _parse(self, new_style_map: bool):
+        """ Parse map into self map, width and height variables. """
         y = None
         for y, line in enumerate(self._lines):
-            self._parse_line(y, line)
-
+            self._parse_line(y, line, new_style_map)
         if y is None:
             raise RobotError("Map is empty!")
         self.height = y + 1
         if self.karel is None:
             raise RobotError("Karel must be placed on the map!")
 
-    def _parse_line(self, y: int, line: str):
+    def _parse_line(self, y: int, line: str, new_style_map: bool):
         """ Parse one line of map, splitting characters or on space if new-style."""
-        tokens = line.split() if self._new_style else line.strip()
+        tokens = line.split() if new_style_map else line.strip()
 
         if not tokens or self.width is not None and self.width != len(tokens):
             raise ValueError(f"line {self._lineno(y)}: "
@@ -142,9 +143,9 @@ class MapParser:
         if token in Karel.CHARS:
             if self.karel is None:
                 self.karel = Karel(Point(x, y), token)
-            elif self.karel is not None:
+            elif not self._karel_override and self.karel is not None:
                 raise RobotError(f"Karel is already on {self.karel.position}.")
-            return
+            return None
         for tile in self._empty, self._wall, Treasure():
             if token in tile.chars:
                 return tile

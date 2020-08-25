@@ -10,13 +10,10 @@ If you like OOP you can write programs like this:
 from karel_robot import WindowOpen
 from karel_robot.parsers import MapParser
 
-
 def example(window):
-    window.karel.turn_left()
-
     while not window.front_is_blocked():
         window.move()
-
+    window.put_beeper()
 
 def main():
     with open("../world/1_window.km") as m:
@@ -28,35 +25,15 @@ def main():
         example(w)
         w.draw()
 
-
 if __name__ == "__main__":
     main()
 ```
 
 ## Run
 
-The file `karel_run.py` in `run` directory parses the command line
-and starts the program. It also defines useful functions for writing
-one's own Karel programs, like `move()` or `turn_left()`, which
-make the above program much simpler:
-
-```python
-from karel_robot.run import *
-
-turn_left()
-while not front_is_blocked():
-    move()
-```
-
-Running this code with `python3 example_run.py levels/00_window.karelmap`
-is probably better unless you want to implement some special behaviour.
-For example the longer code does not redraw the map with each step.
-The smaller one does so, but only the tiles Karel was standing on.
-
-### Interactive
-
-The `karel_run.py` is used to create a standalone executable, with
-which users can try out maps and command Karel using a keyboard.
+In the `run` directory many simple and useful functions are
+defined, including the actual `main()` function in `main.py`
+which parses the command line and starts the `karel` program. 
 
 If you cloned this repository you can install it yourself:
 ```bash
@@ -65,5 +42,51 @@ pip3 install .  # use the path to this repo in place of . if different
 
 Or run it directly:
 ```bash
-python3 karel_robot/run/karel_run.py levels/1_window.karelmap
+python3 karel_robot/run/karel_run.py world/1_window.karelmap
 ```
+
+### Functions
+
+The file `functions.py` defines useful functions for writing
+one's own Karel programs, like `move()` or `turn_left()`, which
+make the above program much simpler:
+
+```python
+from karel_robot.run import *
+
+while not front_is_blocked():
+    move()
+
+put_beeper()
+```
+
+Running this code with `python3 walk.py world/1_window.karelmap`
+is probably better unless you want to implement some custom behaviour.
+For example the longer code only draws the map once Karel is finished.
+The smaller redraws with each step, but only the tiles Karel moves to/from.
+
+### Interactive
+
+The `interactive.py` is used in the `karel` executable, so that
+users can command Karel using a keyboard.
+
+|     Key    |  Function       |
+|------------|-----------------|
+|<kbd>↑</kbd>| `move()`        |
+|<kbd>←</kbd>| `turn_left()`   |
+|<kbd>→</kbd>| `turn_right()`  |
+|<kbd>I</kbd>| `pick_beeper()` |
+|<kbd>U</kbd>| `put_beeper()`  |
+|<kbd>Q</kbd>| `stop()`        |
+
+It is also useful for manual testing and defines several cheats:
+
+|             Key            |                    Function                   |
+|----------------------------|-----------------------------------------------|
+|<kbd>0</kbd> - <kbd>9</kbd> | Sets tile Karel stands on to *n* beepers      |
+|<kbd>$</kbd>                | Sets tile in front of Karel to **treasure**   |
+|<kbd>#</kbd>                | Sets tile in front of Karel to **wall**       |
+|<kbd>.</kbd>                | Sets tile in front of Karel to **empty tile** |
+|<kbd>V</kbd>                | Toggle status line verbosity                  |
+|<kbd>R</kbd>                | Force resize/redraw of the window             |
+|<kbd>I</kbd>                | Stop interactive mode                         |

@@ -68,37 +68,39 @@ class KarelMap:
     """
 
     def __init__(
-            self,
-            x_map: Optional[int] = None,
-            y_map: Optional[int] = None,
-            tiles: Optional[MapType] = None,
+        self,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        tiles: Optional[MapType] = None,
     ):
         """ Setup by default infinite map of Karel's world.
 
         Args:
-            x_map: The width of the map.
-            y_map: The height of the map.
+            x: The width of the map.
+            y: The height of the map.
             tiles: Mutable map supporting tiles[x, y].
         """
-        self.x_map: Optional[int] = x_map
+        self.x: Optional[int] = x
         """ The x_view of the map. """
-        self.y_map: Optional[int] = y_map
+        self.y: Optional[int] = y
         """ The y_view of the map. """
         self._tiles: MapType = dict() if tiles is None else tiles
-        """ Mutable map supporting ``_tiles[y][x]``. """
+        """ Mutable map supporting ``_tiles[x,y]``. """
 
     def in_range(self, x: int, y: int):
         """ Check if map is unlimited or includes this coordinate. """
+
         def in_range(i, top):
             return top is None or 0 <= i < top
-        return in_range(y, self.y_map) and in_range(x, self.x_map)
+
+        return in_range(y, self.y) and in_range(x, self.x)
 
     def __getitem__(self, xy: Tuple[int, int]) -> Tile:
         """ Access tile at coordinate.
 
         If tiles have border (0, 0 to x_map, y_map) then accessing tiles
-        beyond it returns :class:`Wall`. If tiles is a dictionary, then
-        coordinates not contained in it returns :class:`Empty`.
+        beyond it returns :class:`Wall`. If tiles are unbounded, then
+        coordinates not contained them it return :class:`Empty`.
         """
         if not self.in_range(*xy):
             return Wall()
@@ -113,25 +115,39 @@ class KarelMap:
 
     def __len__(self):
         """ Number of tiles. """
-        if self.x_map is None or self.y_map is None:
+        if self.x is None or self.y is None:
             raise ValueError("This KarelMap is unbounded")
-        return self.x_map * self.y_map
+        return self.x * self.y
 
     def __bool__(self):
         """ Check if nonempty. """
-        return self.x_map is None or self.y_map is None or len(self)
+        return self.x is None or self.y is None or len(self)
+
+    def min_coordinate(self, default=Point(0, 0)) -> Point:
+        """ Minimal coordinate of the map. """
+        points = self._tiles.keys() | {default}
+        return Point(
+            x=min(map(lambda p: p[0], points)), y=min(map(lambda p: p[1], points)),
+        )
+
+    def max_coordinate(self, default=Point(0, 0)) -> Point:
+        """ Maximal coordinate of the map. """
+        points = self._tiles.keys() | {default}
+        return Point(
+            x=max(map(lambda p: p[0], points)), y=max(map(lambda p: p[1], points)),
+        )
 
 
-class Board(KarelMap):
+class Board:
     """ Manage :class:`Karel` on a board.
     """
 
     def __init__(
-            self,
-            karel: Optional[Karel] = None,
-            x_map: Optional[int] = None,
-            y_map: Optional[int] = None,
-            tiles: Optional[MapType] = None,
+        self,
+        karel: Optional[Karel] = None,
+        x_map: Optional[int] = None,
+        y_map: Optional[int] = None,
+        tiles: Optional[MapType] = None,
     ):
         """ Setup by default infinite board with Karel the robot.
 
@@ -144,20 +160,20 @@ class Board(KarelMap):
 
         Description copied from :class:`KarelMap`.
         """
-        super().__init__(x_map, y_map, tiles)
+        self.karel_map = KarelMap(x_map, y_map, tiles)
         self.karel = karel or Karel()
         """ The robot living on the board. """
-        if self[self.karel.position].blocking:
+        if self.karel_map[self.karel.position].blocking:
             raise RobotError("Karel can not move!")
 
     @property
     def karel_tile(self) -> Tile:
         """ The :class:`Tile` that :class:`Karel` is standing on. """
-        return self[self.karel.position]
+        return self.karel_map[self.karel.position]
 
     @karel_tile.setter
     def karel_tile(self, tile: Tile):
-        self[self.karel.position] = tile
+        self.karel_map[self.karel.position] = tile
 
     @property
     def karel_facing(self) -> Tile:
@@ -166,7 +182,7 @@ class Board(KarelMap):
         """
         x = self.karel.position.x + self.karel.facing.x
         y = self.karel.position.y + self.karel.facing.y
-        return self[x, y]
+        return self.karel_map[x, y]
 
     @karel_facing.setter
     def karel_facing(self, tile: Tile):
@@ -175,7 +191,7 @@ class Board(KarelMap):
         """
         x = self.karel.position.x + self.karel.facing.x
         y = self.karel.position.y + self.karel.facing.y
-        self[x, y] = tile
+        self.karel_map[x, y] = tile
 
     def move(self):
         """Karel tries to move in the direction he is facing. """
@@ -225,14 +241,14 @@ class BoardView(Board):
     """
 
     def __init__(
-            self,
-            x_view: int,
-            y_view: int,
-            lookahead: int = 1,
-            karel=None,
-            x_map=None,
-            y_map=None,
-            tiles=None,
+        self,
+        x_view: int,
+        y_view: int,
+        lookahead: int = 1,
+        karel=None,
+        x_map=None,
+        y_map=None,
+        tiles=None,
     ):
         """ Setup by default infinite board viewed through limited
         window, that shifts with :class:`Karel`.
@@ -263,45 +279,58 @@ class BoardView(Board):
         self.reset_offset()
 
     def reset_offset(self):
-        """ Recalculate the top-left corner. """
+        """ Recalculate the top-left corner iff necessary. """
 
         def offset(pos_karel, abs_max, rel_max):
-            """ Calculate offset for one dimension. """
-            # if 0 <= pos_karel - pos < rel_max:
-            #    return pos
+            """  Calculate offset for one dimension.
+            Args:
+                pos_karel: Karel's position
+                abs_max: The size of the map if any
+                rel_max: The size of the screen
+            """
             if abs_max is None:  # shift the border only
+                # m checks for case of 1 line view
                 m = min(rel_max - 1, self._lookahead)
-                if pos_karel < m:
+                if pos_karel > rel_max:
+                    return pos_karel - rel_max + 1 + m
+                elif pos_karel < m:
                     return pos_karel - m
-                return pos_karel - rel_max - m
+                else:
+                    return 0
             return max(0, min(pos_karel, abs_max - rel_max))
 
+        x_ok = 0 < self.karel_pos.x < self.x_view
+        y_ok = 0 < self.karel_pos.y < self.y_view
+        offset_new = Point(
+            x=offset(self.karel.position.x, self.karel_map.x, self.x_view),
+            y=offset(self.karel.position.y, self.karel_map.y, self.y_view),
+        )
         self.offset = Point(
-            x=offset(self.karel.position.x, self.x_map, self.x_view),
-            y=offset(self.karel.position.y, self.y_map, self.y_view),
+            x=self.offset.x if x_ok else offset_new.x,
+            y=self.offset.y if y_ok else offset_new.y,
         )
 
     @property
-    def karel_pos(self):
+    def karel_pos(self) -> Point:
         """ Karel's position in the shifted coordinates. """
         xk, yk = self.karel.position
         x, y = self.offset
         return Point(x=xk - x, y=yk - y)
 
-    def border_visible(self, direction: Optional[KAREL_DIR] = None):
+    def border_visible(self, direction: Optional[KAREL_DIR] = None) -> bool:
         """ Check if border is in view. """
         if direction is None:
             direction = self.karel.to_dir()
         if direction == "<":
-            return self.x_map is not None and self.offset.x == 0
+            return self.karel_map.x is not None and self.offset.x == 0
         if direction == ">":
-            return self.x_map == self.offset.x + self.x_view
+            return self.karel_map.x == self.offset.x + self.x_view
         if direction == "^":
-            return self.y_map is not None and self.offset.y == 0
+            return self.karel_map.y is not None and self.offset.y == 0
         if direction == "v":
-            return self.y_map == self.offset.y + self.y_view
+            return self.karel_map.y == self.offset.y + self.y_view
 
-    def karel_lookahead(self):
+    def karel_lookahead(self) -> bool:
         """ Check if there if karel can advance the view ahead. """
         x, y = self.karel_pos
         direction = self.karel.to_dir()
@@ -325,7 +354,7 @@ class BoardView(Board):
         super(BoardView, self).move()
         return self
 
-    def get_pos(self, x, y):
+    def get_pos(self, x, y) -> Point:
         """ Translate from relative (view) position to absolute (map).
 
         This also works for **one tile** beyond boundary.
@@ -334,10 +363,10 @@ class BoardView(Board):
             return Point(x=x + self.offset.x, y=y + self.offset.y)
         raise RuntimeError("BoardView accessed beyond the boundary. ")
 
-    def get_view(self, x, y):
+    def get_view(self, x, y) -> Tile:
         """ Access tile at shifted (view) coordinate. """
-        return self[self.get_pos(x, y)]
+        return self.karel_map[self.get_pos(x, y)]
 
     def set_view(self, x, y, tile):
         """ Set tile at shifted (view) coordinate. """
-        self[self.get_pos(x, y)] = tile
+        self.karel_map[self.get_pos(x, y)] = tile

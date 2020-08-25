@@ -61,16 +61,14 @@ def get_parser() -> ArgumentParser:
         help="The height of the real map (default infinite).",
     )
     parser.add_argument(
-        "--ix",
+        "-X",
         "--infinite_x",
-        dest="infinite_x",
         action="store_true",
         help="Force infinite map in the x-dimension."
     )
     parser.add_argument(
-        "--iy",
+        "-Y",
         "--infinite_y",
-        dest="infinite_y",
         action="store_true",
         help="Force infinite map in the y-dimension."
     )
@@ -124,7 +122,7 @@ def get_parser() -> ArgumentParser:
         "-l",
         "--logfile",
         type=FileType("a", bufsize=1),
-        metavar="F.log",
+        metavar="FILE.log",
         help="Writes logging information to the file (needs append permission).",
     )
     parser.add_argument(
@@ -138,7 +136,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument(
         "-o",
         "--output",
-        metavar="out.km2",
+        metavar="OUT.km2",
         help="Set the output file, save it yourself (map must be finite).",
     )
     parser.add_argument(
@@ -150,7 +148,7 @@ def get_parser() -> ArgumentParser:
         "-m",
         "--karelmap",
         type=FileType("r"),
-        metavar="karel_map.km",
-        help="Text file with a map of karel world (overwrites -x, -y).",
+        metavar="MAP.km2",
+        help="Text file with a map of karel world.",
     )
     return parser
