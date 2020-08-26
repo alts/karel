@@ -81,12 +81,12 @@ users can command Karel using a keyboard.
 
 It is also useful for manual testing and defines several cheats:
 
-|             Key            |                    Function                   |
-|----------------------------|-----------------------------------------------|
-|<kbd>0</kbd> - <kbd>9</kbd> | Sets tile Karel stands on to *n* beepers      |
-|<kbd>$</kbd>                | Sets tile in front of Karel to **treasure**   |
-|<kbd>#</kbd>                | Sets tile in front of Karel to **wall**       |
-|<kbd>.</kbd>                | Sets tile in front of Karel to **empty tile** |
-|<kbd>V</kbd>                | Toggle status line verbosity                  |
-|<kbd>R</kbd>                | Force resize/redraw of the window             |
-|<kbd>I</kbd>                | Stop interactive mode                         |
+|             Key             | Function                                             |
+| :-------------------------: | ---------------------------------------------------- |
+| <kbd>0</kbd> - <kbd>9</kbd> | Sets the tile Karel stands on to *n* **beepers**     |
+|        <kbd>$</kbd>         | Sets the tile in front of Karel to a **treasure**    |
+|        <kbd>#</kbd>         | Sets the tile in front of Karel to a **wall**        |
+|        <kbd>.</kbd>         | Sets the tile in front of Karel to an **empty tile** |
+|        <kbd>V</kbd>         | Toggle status line verbosity                         |
+|        <kbd>R</kbd>         | Force resize of the window                           |
+|        <kbd>I</kbd>         | **Stop interactive** mode                            |

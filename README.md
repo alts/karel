@@ -1,4 +1,22 @@
-# Karel (now in Python)
+<p align="center">
+  <img src="images/window.gif"/> 
+</p>
+
+
+# Karel the Robot (now in Python)
+
+<p>
+<a href="https://www.python.org/downloads/release/python-360/">
+  <img alt="Python Version" src="https://img.shields.io/pypi/pyversions/karel-robot">
+</a>
+<a href="https://pypi.org/project/karel-robot/">
+  <img alt="PyPI" src="https://img.shields.io/pypi/v/karel-robot">
+</a>
+<a href="https://github.com/psf/black">
+  <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+</a>
+</p>
+
 
 > Karel is a pretty snazzy environment for learning to program.
 > You can [read about it here](https://en.wikipedia.org/wiki/Karel_(programming_language)).\
@@ -7,7 +25,7 @@
 >
 > *Stephen Altamirano (`alts/karel`)*
 
-![Karel searching for Treasure.](images/window.gif)
+
 
 ## Installation
 
@@ -29,17 +47,16 @@ turn_left()
 # or use Python, like loops ('while') or logical 'not'
 while not front_is_blocked():
     move()
-
 ```
 
 > For a true unix executable, add the [shebang](https://stackoverflow.com/a/19305076/11105559),
-> then the right to execute with `chmod +x YOUR_PROGRAM.py` and run it as `./YOUR_PROGRAM.py`.
+> then the right to execute with `chmod +x example.py` and run it as `./example.py`.
 
 
 
-If you break the Karel program, it should not leave your terminal screen broken in retaliation, otherwise please
+If you break a Karel program, it should not leave your terminal screen broken in retaliation, otherwise please
 file an [Issue](https://github.com/xsebek/karel/issues/new/choose).
-More advanced or courageous programmers are welcome to look at the `karel_robot` folder and read about the details.
+More advanced or courageous programmers are welcome to look into the `karel_robot` folder and read about the details.
 
 
 
@@ -110,10 +127,13 @@ The above map places Karel right on the 9 beepers.
 Note that there are 21 beepers in the upper right corner in one tile, which the original format does not support.
 The mysterious `N` in Karel's header sets the number of beepers he starts with to unlimited, which is the most fun.
 
-![vim](images/vim.png)
+#### Editor support
 
-> Do you want to write or edit maps? Check out the vim highlighting!
+Do you want to write or edit maps? Check out the vim highlighting!
 
+<p align="center">
+  <img src="images/vim.png"/> 
+</p>
 
 
 ## Run your program
@@ -127,7 +147,9 @@ python3 YOUR_PROGRAM.py  # -m YOUR_MAP.km or other options
 Press <kbd>Q</kbd> to quit or <kbd>P</kbd> to pause program.
 Program pauses when Karel tries to make an illegal move.
 
-<details><summary><h3>Example treasure</h3></summary>
+### Example treasure
+<details>
+  <summary>Click to expand!</summary>
 Run the program `treasure.py` (also below) with worlds `00` - `03_window`.
 Karel will walk to the wall and then search for a treasure in the walls.
 
@@ -153,23 +175,29 @@ The idea comes from a [paper on cooperative learning in CS1](https://dl.acm.org/
       move()
       turn_right()
   ```
+
 </details>
+
 </details>
 
 
-<details><summary><h3>Langton's ant</h3></summary>
-
-Here is a short compressed animation of Karel playing
+### Langton's ant
+<details>
+  <summary>Click to expand!</summary>
+Here is a short animation of Karel playing
 Langton's ant.<sup>[[wiki]](https://en.wikipedia.org/wiki/Langton%27s_ant)</sup>
 
-<img src="images/langton_optimized.gif" alt="langton_optimized" width="40%"/>
+<p>
+  <img src="images/langton_optimized.gif" alt="langton_optimized" width="40%"/>
+</p>
 
-The program `X_langton.py` (also below)  uses a single beeper to mark a tile as "Black"
+The program `ant.py` (also below)  uses a single beeper to mark a tile as "Black"
 and Karel can pick it up to make it "White".
 The ant moves seemingly randomly, but makes a nice picture in about 11000 steps.
-The options used in the recording are:
+The command to recreate the recording is:
+
 ```bash
-programs/X_langton.py -x 70 -y 50 --karel 35 25 --direction ^ --speed 0 --output langton.km2
+programs/ant.py -x 70 -y 50 --karelpos 35 25 --kareldir ^ --output langton.km2
 ```
 
 <details>
@@ -189,7 +217,9 @@ programs/X_langton.py -x 70 -y 50 --karel 35 25 --direction ^ --speed 0 --output
           turn_right()            # turn 90° right
           move()                  # move forward one unit
   ```
+
 </details>
+
 </details>
 
 
@@ -237,11 +267,33 @@ RUN MAIN
 After the program is parsed and run, the `MAIN` function will call itself again until it reaches a wall.
 When that happens, Karel will put down a beeper and the execution stops.
 
-Here is a more complex recursive program searching through a maze in search for a tile with two beepers:
+Here is a more complex recursive program searching through a maze for a tile with two beepers:
 
-![program_treasure](images/program_treasure.gif)
+<p>
+  <img src="images/program_treasure.gif" alt="Recursive program to find treasure"/>
+</p>
+You can define new procedures by writing <kbd>DEFINE <i>new_name</i></kbd>
+and then writing names of procedures and statements into its body,
+which you then <kbd>END</kbd>.
 
+These statements are the simple building blocks you can use
+and combine with your new procedures:
 
+|                  Statement                  | Note                                                         |
+| :-----------------------------------------: | ------------------------------------------------------------ |
+|               <kbd>MOVE</kbd>               | Karel steps forward.                                         |
+|               <kbd>LEFT</kbd>               | Karel turns 90° left - note that there is no `RIGHT` :)      |
+|               <kbd>PUT</kbd>                | Karel puts down one beeper.                                  |
+|               <kbd>PICK</kbd>               | Karel picks up one beeper.                                   |
+|               <kbd>SKIP</kbd>               | Does nothing - like `pass` in Python.                        |
+| <kbd>IFWALL</kbd> <kbd>✓</kbd> <kbd>𐄂</kbd> | If `front_is_blocked()` then `pass` else `move()`            |
+| <kbd>IFMARK</kbd> <kbd>✓</kbd> <kbd>𐄂</kbd> | If `beeper_is_present()` then `pick_beeper()` else `put_beeper()` |
+
+The interpret in `karel_robot.parsers.interpret` is used by the `karel` executable:
+
+```sh
+karel --program programs/graph/3_treasure.ks --map world/maze/treasure/07.km2 --speed 20
+```
 
 
 
@@ -252,7 +304,7 @@ Recently this has been updated by @Tetragramm and @xsebek.
 
 The package on PyPI is maintained by @xsebek.
 
-If you want to contribute, check out the karel_robot folder README.
+If you want to contribute, check out the `karel_robot` folder [README](karel_robot/README.md).
 
 
 ## LICENSE

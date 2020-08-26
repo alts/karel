@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="karel_robot",
-    version="1.0.0",
+    version="1.0.1",
     author="Ondřej Šebek",
     author_email="xsebek@fi.muni.cz",
     description="Karel the Robot simple library and interactive executable",
