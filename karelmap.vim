@@ -8,7 +8,7 @@ if exists("b:current_syntax")
 endif
 
 syn match karelSpace	"\v\."
-syn match karelWall	"\v#"
+syn match karelWall	    "\v#"
 syn match karelBeeper	"\v\d"
 
 syn match karelBot	"\v\>"
