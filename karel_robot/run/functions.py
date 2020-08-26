@@ -1,6 +1,6 @@
 from errno import EINVAL
 from sys import stderr
-from .. import *
+from .. import Window, screen
 from .startup import get_cli_arguments, setup_window
 
 argv = get_cli_arguments()

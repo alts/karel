@@ -32,9 +32,9 @@ along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
-from typing import MutableMapping, Tuple
-from .robot import *
-from .tiles import *
+from typing import MutableMapping, Tuple, Optional
+from .robot import Karel, KAREL_DIR, Point, RobotError
+from .tiles import Tile, Empty, Beeper, Wall, Treasure
 
 MapType = MutableMapping[Tuple[int, int], Tile]
 """ Type whose instance ``m`` support ``m[x,y]``. """

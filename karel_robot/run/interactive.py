@@ -1,5 +1,6 @@
 from curses import KEY_UP, KEY_LEFT, KEY_RIGHT, KEY_HELP, KEY_RESIZE
 from typing import Optional
+from .. import Tile, Empty, Beeper, Wall, Treasure, KeyHandle, KeysHandler
 from .functions import *
 
 
@@ -77,7 +78,7 @@ def interactive():
     outer_speed = window.speed
     set_speed(-1)  # Human lives are too short
 
-    handle = {
+    handler: KeysHandler = {
         # basic commands
         KEY_LEFT: KeyHandle(repeat=True, handle=turn_left),
         KEY_RIGHT: KeyHandle(repeat=True, handle=turn_right),
@@ -105,10 +106,10 @@ def interactive():
         ),
     }
     for i in range(10):
-        handle[ord("0") + i] = KeyHandle(repeat=True, handle=karel_tile_beepers(i))
+        handler[ord("0") + i] = KeyHandle(repeat=True, handle=karel_tile_beepers(i))
 
     try:
-        window.get_char(no_delay=False, handle=handle)
+        window.get_char(no_delay=False, handle=handler)
     except InteractiveStop:
         pass
     set_speed(outer_speed)

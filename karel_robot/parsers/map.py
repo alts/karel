@@ -32,7 +32,7 @@ You should have received a copy of the GNU General Public License along with
 the karel_robot package. If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from typing import Tuple, Dict, Iterable, Optional
-from .. import *
+from .. import Karel, RobotError, Point, Tile, Empty, Wall, Beeper, Treasure
 
 
 class MapParser:

@@ -5,8 +5,8 @@ from argparse import FileType, Namespace, ArgumentParser
 from typing import Optional
 import os.path
 
-from .. import *
-from ..parsers import *
+from .. import Window, Karel, MapType, RobotError
+from ..parsers import get_parser, MapParser
 
 
 ##############################################################################

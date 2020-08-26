@@ -31,11 +31,13 @@ If not, see `<https://www.gnu.org/licenses/>`_.
 """
 from __future__ import annotations
 import io
-from functools import wraps
-from typing import Callable, Any
-from time import sleep
 import curses
-from .board import *
+from functools import wraps
+from time import sleep
+from typing import Callable, Any, NamedTuple, Dict, Optional
+from .robot import Karel, RobotError
+from .tiles import Beeper, Wall, Treasure
+from .board import BoardView, MapType
 
 
 class KeyHandle(NamedTuple):
@@ -330,7 +332,7 @@ class Window(BoardView):
     def save(self):
         # TODO
         if not self.output:
-            return self.draw_exception(f"Can not save Map without specified output.",)
+            return self.draw_exception("Can not save Map without specified output.",)
         try:
             with io.open(self.output, mode="w") as output:
                 c_max = self.karel_map.max_coordinate(default=self.karel.position)
@@ -428,7 +430,9 @@ class WindowOpen:
         return False
 
 
-def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
+def screen(  # noqa: C901
+    win: Window, moved: bool = False, draw: Optional[bool] = False
+):
     """ Safely execute function and redraw.
 
     Use this when the window should stay open upon success.
@@ -436,7 +440,7 @@ def screen(win: Window, moved: bool = False, draw: Optional[bool] = False):
     Args:
         win: The window managing screen.
         moved: Whether Karel has moved (redraws last tile).
-        draw: Draw whole screen (None means no drawing).
+        draw: Draw whole screen (None means no drawing and False means redraw).
     Returns:
         Wrapper to safely execute function func.
     """

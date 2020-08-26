@@ -35,24 +35,27 @@ You should have received a copy of the GNU General Public License
 along with the karel_robot package.
 If not, see `<https://www.gnu.org/licenses/>`_.
 """
-from .window import *
+from .robot import Karel, Point, RobotError
+from .tiles import Tile, Empty, Beeper, Wall, Treasure
+from .board import KarelMap, Board, BoardView, MapType
+from .window import Window, WindowOpen, screen, KeyHandle, KeysHandler
 
 __all__ = [
-    'Karel',
-    'Tile',
-    'Empty',
-    'Wall',
-    'Beeper',
-    'Treasure',
-    'MapType',
-    'KarelMap',
-    'Board',
-    'BoardView',
-    'Window',
-    'WindowOpen',
-    'screen',
-    'RobotError',
-    'Point',
-    'KeyHandle',
-    'KeysHandler',
+    "Karel",
+    "Tile",
+    "Empty",
+    "Wall",
+    "Beeper",
+    "Treasure",
+    "MapType",
+    "KarelMap",
+    "Board",
+    "BoardView",
+    "Window",
+    "WindowOpen",
+    "screen",
+    "RobotError",
+    "Point",
+    "KeyHandle",
+    "KeysHandler",
 ]
