@@ -1,0 +1,37 @@
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+# Modified template from:
+# https://github.com/actions/starter-workflows/blob/master/ci/python-publish.yml
+# and
+# https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Publish distribution 📦 to Test PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.TEST_PYPI_PASSWORD }}
+        repository_url: https://test.pypi.org/legacy/
+        skip_existing: true
+    - name: Publish distribution 📦 to PyPI
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_PASSWORD }}
