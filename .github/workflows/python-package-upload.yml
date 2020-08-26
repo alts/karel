@@ -3,9 +3,7 @@ name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 # https://github.com/actions/starter-workflows/blob/master/ci/python-publish.yml
 # and
 # https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows
-on:
-  release:
-    types: [created]
+on: push
 
 jobs:
   deploy:
