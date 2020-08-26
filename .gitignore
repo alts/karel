@@ -15,4 +15,4 @@ venv/
 
 # don't add files like tmp.txt
 tmp*
-
+*.log
