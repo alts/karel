@@ -157,10 +157,7 @@ def run_program():
             pick=pick_beeper,
             put=put_beeper,
         ),
-        conditions=Conditions(
-            ifwall=front_is_blocked,
-            ifmark=beeper_is_present,
-        ),
+        conditions=Conditions(ifwall=front_is_blocked, ifmark=beeper_is_present,),
         confirm=out if argv.wait else None,
     )
     status_line("LOADED PROGRAM", force=True)

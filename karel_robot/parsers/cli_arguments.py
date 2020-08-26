@@ -34,13 +34,13 @@ def get_parser() -> ArgumentParser:
     parser = ArgumentParser(
         description=karel_doc,
         epilog=karel_license,
-        usage="%(prog)s [--help] [OPTIONS] [-m karel_map.km]"
+        usage="%(prog)s [--help] [OPTIONS] [-m karel_map.km]",
     )
     parser.add_argument(
         "--version",
         action="version",
         version="karel-robot 1.0",
-        help="Show program's version number and exit."
+        help="Show program's version number and exit.",
     )
     parser.add_argument(
         "-x",
@@ -64,13 +64,13 @@ def get_parser() -> ArgumentParser:
         "-X",
         "--infinite_x",
         action="store_true",
-        help="Force infinite map in the x-dimension."
+        help="Force infinite map in the x-dimension.",
     )
     parser.add_argument(
         "-Y",
         "--infinite_y",
         action="store_true",
-        help="Force infinite map in the y-dimension."
+        help="Force infinite map in the y-dimension.",
     )
     parser.add_argument(
         "-d",
@@ -140,7 +140,8 @@ def get_parser() -> ArgumentParser:
         help="Set the output file, save it yourself (map must be finite).",
     )
     parser.add_argument(
-        "-n", "--new_style_map",
+        "-n",
+        "--new_style_map",
         action="store_true",
         help="Map starts with 'KAREL X Y > B' and has spaces between tiles.",
     )

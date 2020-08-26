@@ -44,6 +44,7 @@ class MapParser:
         height: of the map
         width: of the map
     """
+
     def __init__(
         self,
         lines: Iterable[str],
@@ -99,8 +100,9 @@ class MapParser:
         tokens = line.split() if new_style_map else line.strip()
 
         if not tokens or self.width is not None and self.width != len(tokens):
-            raise ValueError(f"line {self._lineno(y)}: "
-                             "Karel map must be a rectangle!")
+            raise ValueError(
+                f"line {self._lineno(y)}: " "Karel map must be a rectangle!"
+            )
         self.width = len(tokens)
 
         x = None
@@ -154,4 +156,6 @@ class MapParser:
                 return Beeper(count=int(token))
         except ValueError:
             pass
-        raise RobotError(f"line {self._lineno(y)}: Invalid token '{token}' in column {x+1}.")
+        raise RobotError(
+            f"line {self._lineno(y)}: Invalid token '{token}' in column {x+1}."
+        )

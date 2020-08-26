@@ -5,8 +5,9 @@ See the README in linked GitHub repository for more details.
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = fh.read()\
-        .replace("images", "https://github.com/xsebek/karel/blob/master/images")
+    long_description = fh.read().replace(
+        "images", "https://github.com/xsebek/karel/blob/master/images"
+    )
 
 setuptools.setup(
     name="karel_robot",
@@ -26,8 +27,6 @@ setuptools.setup(
         "Topic :: Education",
         "Intended Audience :: Education ",
     ],
-    python_requires='>=3.6',
-    entry_points={
-        'console_scripts': ['karel=karel_robot.run.main:main']
-    }
+    python_requires=">=3.6",
+    entry_points={"console_scripts": ["karel=karel_robot.run.main:main"]},
 )

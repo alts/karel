@@ -7,6 +7,7 @@ from .functions import *
 #                                   OUTPUT                                   #
 ##############################################################################
 
+
 @screen(window, draw=None)
 def message(text="Press Q to quit, P to pause", paused=False, *, color=None):
     """ Show message to user in the message window (bottom line). """
@@ -27,19 +28,23 @@ def write_map(filepath: Optional[str] = None):
 #                                   CHEATS                                   #
 ##############################################################################
 
+
 def front_set_tile(tile):
     """ Set tile in front of Karel. """
+
     @screen(window, draw=True)
     def _front_set_tile():
         if not isinstance(tile, Tile):
             return ValueError(f"Can not set map Tile to {tile}")
         window.karel_facing = tile
         status_line(f"SET {tile}", color=window.Colors.empty)
+
     return _front_set_tile
 
 
 def karel_tile_beepers(n: int):
     """ Set the tile Karel is standing on to include exactly `n` beepers. """
+
     @screen(window)
     def _karel_tile_beepers():
         """ Set the tile Karel stands on to exactly `n` beepers. """
@@ -48,12 +53,14 @@ def karel_tile_beepers(n: int):
         else:
             window.karel_tile = Beeper(count=n)
         status_line(f"SET{n}")
+
     return _karel_tile_beepers
 
 
 ##############################################################################
 #                              INTERACTIVE MODE                              #
 ##############################################################################
+
 
 class InteractiveStop(Exception):
     pass
@@ -98,7 +105,7 @@ def interactive():
         ),
     }
     for i in range(10):
-        handle[ord('0') + i] = KeyHandle(repeat=True, handle=karel_tile_beepers(i))
+        handle[ord("0") + i] = KeyHandle(repeat=True, handle=karel_tile_beepers(i))
 
     try:
         window.get_char(no_delay=False, handle=handle)
