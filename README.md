@@ -69,7 +69,7 @@ Karel maps are also simple text files and look like this one:
     #....^.
 
 Karel is represented by the arrow (`^`) looking up.
-There are two walls (`#`) and one beeper in the upper right corner (`1`).
+There are two walls (`#`) and one beeper in the upper left corner (`1`).
 There is no treasure (`$`).
 
 > Planing to write maps? Check out the vim highlighting! :)
